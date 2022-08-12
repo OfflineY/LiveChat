@@ -116,22 +116,6 @@ func (c *Client) writePump() {
 	}
 }
 
-// serveWs handles websocket requests from the peer.
-func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
-	client.hub.register <- client
-
-	// Allow collection of memory referenced by the caller by doing all work in
-	// new goroutines.
-	go client.writePump()
-	go client.readPump()
-}
-
 // Hub maintains the set of active clients and broadcasts messages to the
 // clients.
 type Hub struct {
@@ -183,8 +167,8 @@ func (h *Hub) run() {
 //       Gorilla Websocket Example END
 // ***********************************************
 
-func TestWebSocket() {
-	url := "ws://localhost:8080/socket"
+func ChatUser(url string) {
+	// url := "ws://localhost:8080/socket"
 	c, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		log.Fatal("连接服务器失败:", err)
@@ -194,7 +178,7 @@ func TestWebSocket() {
 	// fmt.Print(res)
 	for {
 		// var msg string
-		// fmt.Scan(&msg)
+		//
 		// err = c.WriteMessage(websocket.TextMessage, []byte(msg))
 		// if err != nil {
 		// 	fmt.Println(err)
@@ -226,8 +210,11 @@ func bootstrap() {
 mode = 0
 
 [Server]
+Url = "/socket"
+Port = "8080"
 # 待补充配置
 [User]
+Url = "ws://localhost:8080/socket"
 # 待补充配置`)
 		defer f.Close()
 		log.Print("创建配置文件完成...\n")
@@ -242,6 +229,7 @@ mode = 0
 
 
 
+
 `)
 		Enter()
 	} else {
@@ -250,25 +238,40 @@ mode = 0
 		mode := s.Section("").Key("mode").String()
 		switch {
 		case mode == "0":
-			log.Printf("已开启【服务端】模式。\n")
+			log.Printf("已开启【服务端】模式，此模式是为服务器所准备。\n")
 			flag.Parse()
 			hub := newHub()
 			// 开启另一个 goroutine
 			go hub.run()
-			http.HandleFunc("/socket", func(w http.ResponseWriter, r *http.Request) {
-				serveWs(hub, w, r)
+			severUrl := s.Section("Server").Key("Url").String()
+			severPort := s.Section("Server").Key("Port").String()
+			log.Printf("程序已在运行，本地端口: http://localhost:%s%s", severPort, severUrl)
+			http.HandleFunc(severUrl, func(w http.ResponseWriter, r *http.Request) {
+				// serveWs(hub, w, r)
+				conn, err := upgrader.Upgrade(w, r, nil)
+				if err != nil {
+					log.Println(err)
+					return
+				}
+				client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+				client.hub.register <- client
+				// Allow collection of memory referenced by the caller by doing all work in
+				// new goroutines.
+				go client.writePump()
+				go client.readPump()
 			})
 			// 在端口启动
-			log.Fatal(http.ListenAndServe("localhost:8080", nil))
+			ListenAndServe := "localhost:" + severPort
+			log.Fatal(http.ListenAndServe(ListenAndServe, nil))
 		case mode == "1":
-			log.Print("已开启【客户端】模式。\n")
-			TestWebSocket()
+			log.Print("已开启【客户端】模式，此模式是为使用者所准备。\n")
+			ChatUser(s.Section("User").Key("Url").String())
 		}
 	}
 }
 
 func Enter() {
-	fmt.Printf("按任意键退出...")
+	fmt.Printf("\n\n\n\n按任意键退出...")
 	b := make([]byte, 1)
 	os.Stdin.Read(b)
 }
