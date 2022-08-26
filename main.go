@@ -77,7 +77,7 @@ func (c *Client) readPump() {
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("错误: %v", err)
+				log.Printf("WS错误: %v", err)
 			}
 			break
 		}
@@ -154,7 +154,6 @@ type Hub struct {
 func newHub() *Hub {
 
 	return &Hub{
-
 		broadcast:  make(chan []byte),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
@@ -168,6 +167,7 @@ func (h *Hub) run() {
 
 	for {
 
+		// select 判断
 		select {
 
 		case client := <-h.register:
@@ -195,10 +195,12 @@ func (h *Hub) run() {
 //       Gorilla Websocket Example END
 // ***********************************************
 
+// 客户端获取返回数据模块
 func ChatUser(url string) {
 
 	// url := "ws://localhost:8080/socket"
 	// url 获取 ini 里面的内容
+	// 连接 url 里的服务器
 	c, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		log.Fatal("连接服务器失败:", err)
@@ -207,11 +209,13 @@ func ChatUser(url string) {
 
 	log.Printf("连接服务器成功")
 
-	fmt.Println("请输入你的用户名: ")
+	// 设置自己的用户名
+	fmt.Print("请输入你的用户名: ")
 	inputReader := bufio.NewReader(os.Stdin)
 	clientName, _ := inputReader.ReadString('\n')
 
-	err = c.WriteMessage(websocket.TextMessage, []byte("【系统消息】 新的用户登录："+clientName))
+	// 新用户加入全群聊通知
+	err = c.WriteMessage(websocket.TextMessage, []byte("【系统消息】 新的用户加入："+clientName))
 	if err != nil {
 		log.Printf("发生错误：%s", err)
 	}
@@ -231,14 +235,15 @@ func ChatUser(url string) {
 }
 
 func sendMsg(c *websocket.Conn, clientName string) {
-
 	for {
+		// fmt.Print("Send> ")
 		inputReader := bufio.NewReader(os.Stdin)
 		sendMsg, _ := inputReader.ReadString('\n')
 
 		// 简化服务端，在客户端进行数据处理
 		// 拼贴用户名和发送的消息
-		msg := "【" + clientName + "】" + sendMsg
+		// msg := "【" + clientName + "】" + sendMsg
+		msg := sendMsg
 		// fmt.Print(msg)
 
 		// 处理完成发送至服务端
@@ -261,16 +266,18 @@ func bootstrap() {
 	// 有 跳过直接开始
 	if Seterr != nil {
 
-		log.Print("未找到配置文件开始初始化。\n")
+		// 初始化创建文件
+		log.Print("未找到配置文件开始初始化\n")
 		_, err := os.Create(setPath)
 		if err != nil {
-			log.Printf("初始化失败(%s)。\n", err)
+			log.Printf("初始化失败(%s)\n", err)
 			Enter()
 		}
 
+		// 打开文件写入
 		f, err := os.OpenFile(setPath, os.O_RDWR, 0600)
 		if err != nil {
-			log.Printf("初始化失败(%s)。\n", err)
+			log.Printf("初始化失败(%s)\n", err)
 			Enter()
 		}
 
@@ -288,11 +295,14 @@ Port = "8080"
 [User]
 Url = "ws://localhost:8080/socket"
 # 待补充配置`)
+
+		// 写入完成后关闭文件
 		defer f.Close()
 
-		log.Print("创建配置文件完成...\n")
+		// 省略（感觉log写的太多了）
+		// log.Print("创建配置文件完成...\n")
 
-		log.Print("初始化结束，请更改配置文件，并重启应用。\n")
+		log.Print("初始化结束，请更改配置文件，并重启应用\n")
 
 		fmt.Print(`
 		
@@ -302,7 +312,7 @@ Url = "ws://localhost:8080/socket"
 		
   + 请在 cmd 或 vscode 终端或一些常驻终端使用，否则可能会出现出现错误闪退的情况。
 
-  + 目前仅处于 BETA 版本，测试中且项目未未完工。
+  + 目前仅处于开发中且项目未完全完工，如有错误请提出。
 
   + 虽已经实现效果但安全性有待测试，仅供学习，请勿用于其他用途。
 
@@ -313,8 +323,8 @@ Url = "ws://localhost:8080/socket"
 
 	} else {
 
-		log.Printf("找到配置文件，跳过初始化过程.\n")
-		go CheckNew(version)
+		// 跳过初始化
+		log.Printf("找到配置文件，跳过初始化过程\n")
 
 		// 获取 ini 的 mode 数据，0为服务端，1为客户端
 		mode := s.Section("").Key("mode").String()
@@ -322,17 +332,21 @@ Url = "ws://localhost:8080/socket"
 		case mode == "0":
 
 			// mode 0 服务端
-			log.Printf("已开启【服务端】模式，此模式是为服务器所准备。\n")
+			log.Printf("已开启【服务端】模式，此模式是为服务器所准备\n")
 			flag.Parse()
 			hub := newHub()
 
-			// 开启另一个 goroutine
+			// 开启另一个 goroutine 启动 ws
 			go hub.run()
 			severUrl := s.Section("Server").Key("Url").String()
 			severPort := s.Section("Server").Key("Port").String()
 			log.Printf("程序已在运行，本地端口: http://localhost:%s%s", severPort, severUrl)
+			// 服务端指令控制
+			go serveCommand()
 			http.HandleFunc(severUrl, func(w http.ResponseWriter, r *http.Request) {
+
 				// serveWs(hub, w, r)
+
 				conn, err := upgrader.Upgrade(w, r, nil)
 				if err != nil {
 					log.Println(err)
@@ -340,12 +354,13 @@ Url = "ws://localhost:8080/socket"
 				}
 				client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
 				client.hub.register <- client
-				// Allow collection of memory referenced by the caller by doing all work in
-				// new goroutines.
+
+				// 给多个 goroutine 启动
 				go client.writePump()
 				go client.readPump()
 			})
-			// 在端口启动
+
+			// 在主要端口启动 severPort -> ini
 			ListenAndServe := "localhost:" + severPort
 			log.Fatal(http.ListenAndServe(ListenAndServe, nil))
 
@@ -355,8 +370,23 @@ Url = "ws://localhost:8080/socket"
 			// 文字在客户端处理完成后发回服务端返回给其他用户
 			// 可以尽可能减少服务器负担
 			log.Print("已开启【客户端】模式，此模式是为使用者所准备。\n")
+
+			// 检查版本的更新
+			// 启动一个新的 goroutine 检查，防止github连接失败一直卡在连接步骤
+			go CheckNew(version)
 			ChatUser(s.Section("User").Key("Url").String())
 		}
+	}
+}
+
+// 服务端指令控制
+func serveCommand() {
+	fmt.Print("\n")
+	for {
+		inputReader := bufio.NewReader(os.Stdin)
+		fmt.Print(">>> ")
+		command, _ := inputReader.ReadString('\n')
+		fmt.Printf("err command: %s", command)
 	}
 }
 
@@ -367,7 +397,7 @@ func Enter() {
 	os.Stdin.Read(b)
 }
 
-// Print logo
+// 打印 logo
 func logo(version string) {
 	fmt.Println(`
     _____     _ _         _____ _       _   
@@ -379,26 +409,31 @@ func logo(version string) {
    `)
 }
 
+// 设置全局 version 变量
 var version string = "1.0"
 
 func CheckNew(version string) {
-	log.Print("正在连接Github检查更新...")
-	url := "https://gist.githubusercontent.com/OfflineY/0458085da3b551b3cfa1f08b5824af29/raw/913e8457b8e3e9adc8ec1ceef3106c88e87485a8/OnlineChatVersionInfo.html"
-	//将要读取的网站放入到get方法中
+	log.Print("正在连接 Github 检查更新...")
+
+	// 用 gist 这个来记录更新
+	url := "https://raw.githubusercontent.com/OfflineY/OfflineY/main/online-chat-version"
+
+	// 将要读取的网站放入到 get 方法中
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Println("检查更新失败，无法连接 Github")
 	} else {
-		//读取数据
+		// 读取 body 里面的内容
 		bytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			log.Println("检查更新失败")
+			log.Println("检查更新失败，无法解析返回数据")
 		}
-		//关闭链接
+		// 关闭链接
 		defer resp.Body.Close()
 		data := string(bytes)
-		if data == version {
-			log.Printf("检查更新完成，已经是最新版本：%s", version)
+		// 判断新的版本提示更新or不更新
+		if data != version {
+			log.Printf("检查更新完成，已经是最新版本：%s", data)
 		} else {
 			log.Printf("检查更新完成，有新的可更新版本：%s", data)
 		}
