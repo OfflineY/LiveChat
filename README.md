@@ -1,6 +1,6 @@
 <div align="center">
   
-# 📫OnlineChat
+# 📫OnlineChat ![Travis](https://img.shields.io/badge/Version-1.0-brightgreen.svg)
 ✨ 使用 golang 实现的简单聊天示例 ✨
 
  </div>
