@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -13,15 +15,21 @@ import (
 	"gopkg.in/ini.v1"
 )
 
+// TODO:列入ini 为可变内容
+// 2022.8：pingPeriod 省略
 const (
+
 	// 允许向对等方写入消息的时间。
 	writeWait = 10 * time.Second
+
 	// 允许从对等方读取下一条pong消息的时间。
 	pongWait = 60 * time.Second
+
 	// 将ping发送到此时段的对等节点。必须小于pongWait。
-	pingPeriod = (pongWait * 9) / 10
+	// pingPeriod = (pongWait * 9) / 10
+
 	// 允许来自对等方的最大消息大小。
-	maxMessageSize = 512
+	maxMessageSize = 10240
 )
 
 var (
@@ -29,6 +37,7 @@ var (
 	space   = []byte{' '}
 )
 
+// 给 http 升级为 websocket
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -36,8 +45,10 @@ var upgrader = websocket.Upgrader{
 
 type Client struct {
 	hub *Hub
+
 	// websocket连接。
 	conn *websocket.Conn
+
 	// 消息的缓冲通道。
 	send chan []byte
 }
@@ -50,43 +61,51 @@ type Client struct {
 // 通过执行 all 确保连接上最多有一个读取器
 // 从这里读到 goroutine。
 func (c *Client) readPump() {
+
 	defer func() {
 		c.hub.unregister <- c
 		c.conn.Close()
 	}()
+
+	// 设置服务端基本配置
 	c.conn.SetReadLimit(maxMessageSize)
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+
 	for {
+		// 设置连接循环
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
+				log.Printf("错误: %v", err)
 			}
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 		c.hub.broadcast <- message
 	}
+
 }
 
-// writePump pumps messages from the hub to the websocket connection.
-//
-// A goroutine running writePump is started for each connection. The
-// application ensures that there is at most one writer to a connection by
-// executing all writes from this goroutine.
+// writePump 将消息从集线器抽到websocket连接上。
+// 一个运行writePump的Goroutine为每个连接启动。
+// 应用程序确保一个连接最多只有一个写入者。
+// 从这个goroutine中执行所有的写操作。
 func (c *Client) writePump() {
-	ticker := time.NewTicker(pingPeriod)
+
+	ticker := time.NewTicker((pongWait * 9) / 10)
+
 	defer func() {
 		ticker.Stop()
 		c.conn.Close()
 	}()
+
 	for {
 		select {
 		case message, ok := <-c.send:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
-				// The hub closed the channel.
+				// 中枢关闭了通道。
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
@@ -97,7 +116,7 @@ func (c *Client) writePump() {
 			}
 			w.Write(message)
 
-			// Add queued chat messages to the current websocket message.
+			// 将排队的聊天信息添加到当前websocket信息中。
 			n := len(c.send)
 			for i := 0; i < n; i++ {
 				w.Write(newline)
@@ -116,34 +135,41 @@ func (c *Client) writePump() {
 	}
 }
 
-// Hub maintains the set of active clients and broadcasts messages to the
-// clients.
+// 集线器维护活动客户的集合，并向这些客户广播消息到客户端。
 type Hub struct {
-	// Registered clients.
+
+	// 注册客户。
 	clients map[*Client]bool
 
-	// Inbound messages from the clients.
+	// 来自客户的呼入信息。
 	broadcast chan []byte
 
-	// Register requests from the clients.
+	// 登记来自客户的请求。
 	register chan *Client
 
-	// Unregister requests from clients.
+	// 取消对客户请求的登记。
 	unregister chan *Client
 }
 
 func newHub() *Hub {
+
 	return &Hub{
+
 		broadcast:  make(chan []byte),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
 	}
+
 }
 
+// 启动 web
 func (h *Hub) run() {
+
 	for {
+
 		select {
+
 		case client := <-h.register:
 			h.clients[client] = true
 		case client := <-h.unregister:
@@ -160,7 +186,9 @@ func (h *Hub) run() {
 					delete(h.clients, client)
 				}
 			}
+
 		}
+
 	}
 }
 
@@ -168,79 +196,136 @@ func (h *Hub) run() {
 // ***********************************************
 
 func ChatUser(url string) {
+
 	// url := "ws://localhost:8080/socket"
+	// url 获取 ini 里面的内容
 	c, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		log.Fatal("连接服务器失败:", err)
 		Enter()
 	}
+
 	log.Printf("连接服务器成功")
-	// fmt.Print(res)
+
+	fmt.Println("请输入你的用户名: ")
+	inputReader := bufio.NewReader(os.Stdin)
+	clientName, _ := inputReader.ReadString('\n')
+
+	err = c.WriteMessage(websocket.TextMessage, []byte("【系统消息】 新的用户登录："+clientName))
+	if err != nil {
+		log.Printf("发生错误：%s", err)
+	}
+
+	go sendMsg(c, clientName)
+
+	// 重复监听服务端发送过来的数据
 	for {
-		// var msg string
-		//
-		// err = c.WriteMessage(websocket.TextMessage, []byte(msg))
-		// if err != nil {
-		// 	fmt.Println(err)
-		// }
 		_, message, err := c.ReadMessage()
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Printf("[User] %s", message)
+
+		// log形式打印出来
+		log.Printf("%s", message)
 	}
 }
 
+func sendMsg(c *websocket.Conn, clientName string) {
+
+	for {
+		inputReader := bufio.NewReader(os.Stdin)
+		sendMsg, _ := inputReader.ReadString('\n')
+
+		// 简化服务端，在客户端进行数据处理
+		// 拼贴用户名和发送的消息
+		msg := "【" + clientName + "】" + sendMsg
+		// fmt.Print(msg)
+
+		// 处理完成发送至服务端
+		err := c.WriteMessage(websocket.TextMessage, []byte(msg))
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+}
+
+// 开启时引导程序
+// 包括：初始化、判断配置文件、启动服务
 func bootstrap() {
 	setPath := "set.ini"
+
+	// 检测配置文件的存在性
 	s, Seterr := ini.Load(setPath)
+
+	// 无 初始化，创建ini
+	// 有 跳过直接开始
 	if Seterr != nil {
+
 		log.Print("未找到配置文件开始初始化。\n")
 		_, err := os.Create(setPath)
 		if err != nil {
 			log.Printf("初始化失败(%s)。\n", err)
 			Enter()
 		}
+
 		f, err := os.OpenFile(setPath, os.O_RDWR, 0600)
 		if err != nil {
 			log.Printf("初始化失败(%s)。\n", err)
 			Enter()
 		}
+
+		// 初始化写入ini
 		f.WriteString(`# mode 为设置服务模式, 0 为服务端, 1 为客户端
 mode = 0
 
+# 开启服务端模式则必须设置此内容，客户端情况下删去保留没有影响
 [Server]
+# Url可以当作密码或者标签
 Url = "/socket"
 Port = "8080"
 # 待补充配置
+# 客户端模式必须设置否则闪退，举例ws://【ServerIp】:【Port】/【Url】
 [User]
 Url = "ws://localhost:8080/socket"
 # 待补充配置`)
 		defer f.Close()
+
 		log.Print("创建配置文件完成...\n")
+
 		log.Print("初始化结束，请更改配置文件，并重启应用。\n")
+
 		fmt.Print(`
 		
+
+
 【注意事项】
 		
   + 请在 cmd 或 vscode 终端或一些常驻终端使用，否则可能会出现出现错误闪退的情况。
-  + 目前仅处于 BETA 版本，测试中且项目未未完工。
-  + 虽已经实现效果但安全性有待测试，仅供学习，请勿用于其他用途。
 
+  + 目前仅处于 BETA 版本，测试中且项目未未完工。
+
+  + 虽已经实现效果但安全性有待测试，仅供学习，请勿用于其他用途。
 
 
 
 `)
 		Enter()
+
 	} else {
+
 		log.Printf("找到配置文件，跳过初始化过程.\n")
+		go CheckNew(version)
+
 		// 获取 ini 的 mode 数据，0为服务端，1为客户端
 		mode := s.Section("").Key("mode").String()
 		switch {
 		case mode == "0":
+
+			// mode 0 服务端
 			log.Printf("已开启【服务端】模式，此模式是为服务器所准备。\n")
 			flag.Parse()
 			hub := newHub()
+
 			// 开启另一个 goroutine
 			go hub.run()
 			severUrl := s.Section("Server").Key("Url").String()
@@ -263,23 +348,30 @@ Url = "ws://localhost:8080/socket"
 			// 在端口启动
 			ListenAndServe := "localhost:" + severPort
 			log.Fatal(http.ListenAndServe(ListenAndServe, nil))
+
 		case mode == "1":
+
+			// mode 1 客户端
+			// 文字在客户端处理完成后发回服务端返回给其他用户
+			// 可以尽可能减少服务器负担
 			log.Print("已开启【客户端】模式，此模式是为使用者所准备。\n")
 			ChatUser(s.Section("User").Key("Url").String())
 		}
 	}
 }
 
+// 按任意键退出
 func Enter() {
 	fmt.Printf("\n\n\n\n按任意键退出...")
 	b := make([]byte, 1)
 	os.Stdin.Read(b)
 }
 
+// Print logo
 func logo(version string) {
 	fmt.Println(`
     _____     _ _         _____ _       _   
-   |     |___| |_|___ ___|     | |_ ___| |_     OlineChat
+   |     |___| |_|___ ___|     | |_ ___| |_     OnlineChat
    |  |  |   | | |   | -_|   --|   | .'|  _|    Version ` + version + `
    |_____|_|_|_|_|_|_|___|_____|_|_|__,|_|      Powered by BillyYuan
 
@@ -287,9 +379,35 @@ func logo(version string) {
    `)
 }
 
+var version string = "1.0"
+
+func CheckNew(version string) {
+	log.Print("正在连接Github检查更新...")
+	url := "https://gist.githubusercontent.com/OfflineY/0458085da3b551b3cfa1f08b5824af29/raw/913e8457b8e3e9adc8ec1ceef3106c88e87485a8/OnlineChatVersionInfo.html"
+	//将要读取的网站放入到get方法中
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Println("检查更新失败，无法连接 Github")
+	} else {
+		//读取数据
+		bytes, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Println("检查更新失败")
+		}
+		//关闭链接
+		defer resp.Body.Close()
+		data := string(bytes)
+		if data == version {
+			log.Printf("检查更新完成，已经是最新版本：%s", version)
+		} else {
+			log.Printf("检查更新完成，有新的可更新版本：%s", data)
+		}
+	}
+}
+
 func main() {
 	// 打印 logo
-	logo("0.1 BETA")
+	logo(version)
 	// 初始引导程序
 	bootstrap()
 }
