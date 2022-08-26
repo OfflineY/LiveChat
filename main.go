@@ -5,30 +5,34 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
+
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
 	"gopkg.in/ini.v1"
 )
 
-// TODO:列入ini 为可变内容
-// 2022.8：pingPeriod 省略
+// ***********************************************
+//
+//	全局变量开始
+//
+// ***********************************************
 const (
-
-	// 允许向对等方写入消息的时间。
+	// 允许向对等方写入消息的时间
 	writeWait = 10 * time.Second
-
-	// 允许从对等方读取下一条pong消息的时间。
+	// 允许从对等方读取下一条pong消息的时间
 	pongWait = 60 * time.Second
 
-	// 将ping发送到此时段的对等节点。必须小于pongWait。
-	// pingPeriod = (pongWait * 9) / 10
+	// 将ping发送到此时段的对等节点。必须小于pongWait
+	// 目前已经取消此功能但会随着pongWait改变
+	// pingPeriod = ----
 
-	// 允许来自对等方的最大消息大小。
+	// 允许来自对等方的最大消息大小
 	maxMessageSize = 10240
 )
 
@@ -45,33 +49,35 @@ var upgrader = websocket.Upgrader{
 
 type Client struct {
 	hub *Hub
-
-	// websocket连接。
+	// websocket连接
 	conn *websocket.Conn
-
-	// 消息的缓冲通道。
+	// 消息的缓冲通道
 	send chan []byte
 }
 
-//	Gorilla Websocket Example START
-//
 // ***********************************************
+//                 全局变量结束
+// ***********************************************
+
+// ***********************************************
+//                 服务端模块开始
+// ***********************************************
+
+// 其中借鉴了websocket的官方文档中的示例
+// 服务端
 // readPump 将消息从 websocket 连接泵送到集线器。
 // 应用程序在每个连接 goroutine 中运行 readPump 应用程序
 // 通过执行 all 确保连接上最多有一个读取器
-// 从这里读到 goroutine。
+// 从这里读到 goroutine
 func (c *Client) readPump() {
-
 	defer func() {
 		c.hub.unregister <- c
 		c.conn.Close()
 	}()
-
 	// 设置服务端基本配置
 	c.conn.SetReadLimit(maxMessageSize)
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-
 	for {
 		// 设置连接循环
 		_, message, err := c.conn.ReadMessage()
@@ -84,13 +90,13 @@ func (c *Client) readPump() {
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 		c.hub.broadcast <- message
 	}
-
 }
 
-// writePump 将消息从集线器抽到websocket连接上。
-// 一个运行writePump的Goroutine为每个连接启动。
-// 应用程序确保一个连接最多只有一个写入者。
-// 从这个goroutine中执行所有的写操作。
+// 服务端
+// writePump 将消息从集线器抽到websocket连接上
+// 一个运行writePump的Goroutine为每个连接启动
+// 应用程序确保一个连接最多只有一个写入者
+// 从这个goroutine中执行所有的写操作
 func (c *Client) writePump() {
 
 	ticker := time.NewTicker((pongWait * 9) / 10)
@@ -105,7 +111,7 @@ func (c *Client) writePump() {
 		case message, ok := <-c.send:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
-				// 中枢关闭了通道。
+				// 中枢关闭了通道
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
@@ -116,7 +122,7 @@ func (c *Client) writePump() {
 			}
 			w.Write(message)
 
-			// 将排队的聊天信息添加到当前websocket信息中。
+			// 将排队的聊天信息添加到当前websocket信息中
 			n := len(c.send)
 			for i := 0; i < n; i++ {
 				w.Write(newline)
@@ -135,41 +141,37 @@ func (c *Client) writePump() {
 	}
 }
 
-// 集线器维护活动客户的集合，并向这些客户广播消息到客户端。
+// 服务端
+// 集线器维护活动客户的集合，并向这些客户广播消息到客户端
 type Hub struct {
 
-	// 注册客户。
+	// 注册客户
 	clients map[*Client]bool
 
-	// 来自客户的呼入信息。
+	// 来自客户的呼入信息
 	broadcast chan []byte
 
-	// 登记来自客户的请求。
+	// 登记来自客户的请求
 	register chan *Client
 
-	// 取消对客户请求的登记。
+	// 取消对客户请求的登记
 	unregister chan *Client
 }
 
+// 服务端
 func newHub() *Hub {
-
 	return &Hub{
 		broadcast:  make(chan []byte),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
 	}
-
 }
 
-// 启动 web
+// 服务端 启动 web
 func (h *Hub) run() {
-
 	for {
-
-		// select 判断
 		select {
-
 		case client := <-h.register:
 			h.clients[client] = true
 		case client := <-h.unregister:
@@ -186,17 +188,61 @@ func (h *Hub) run() {
 					delete(h.clients, client)
 				}
 			}
-
 		}
-
 	}
 }
 
-//       Gorilla Websocket Example END
+// 服务端指令控制工具
+// 具体指令表运行 ~Help
+func serveCommand() {
+	fmt.Print("\n")
+	for {
+		inputReader := bufio.NewReader(os.Stdin)
+		fmt.Print(">>> ")
+		command, _ := inputReader.ReadString('\n')
+		switch strings.Join(strings.Fields(command), "") {
+		// UserList 包括大小写两种模式
+		case "UserList":
+			getUserList()
+		case "userList":
+			getUserList()
+		// Help 包括大小写两种模式
+		case "Help":
+			getHelp()
+		case "help":
+			getHelp()
+		}
+	}
+}
+
+// 服务端指令集-UserList-获取用户列表
+func getUserList() {
+	fmt.Print("UserList指令存在但还在开发中\n")
+}
+
+// 服务端指令集-Help-获取帮助
+func getHelp() {
+	fmt.Print("Help指令存在但还在开发中\n")
+}
+
+// 把登录用户记录
+// 暂时未完工，不知道怎么写
+// func addUser(name string)  {
+// 	data := "["
+// 	data += name
+// 	data += "]"
+// }
+
+// ***********************************************
+//                 服务端模块结束
 // ***********************************************
 
-// 客户端获取返回数据模块
-func ChatUser(url string) {
+// ***********************************************
+//                 客户端模块开始
+// ***********************************************
+
+// 客户端 获取返回数据模块
+func getChat(url string) {
 
 	// url := "ws://localhost:8080/socket"
 	// url 获取 ini 里面的内容
@@ -204,13 +250,13 @@ func ChatUser(url string) {
 	c, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		log.Fatal("连接服务器失败:", err)
-		Enter()
+		getOut()
 	}
 
 	log.Printf("连接服务器成功")
 
 	// 设置自己的用户名
-	fmt.Print("请输入你的用户名: ")
+	log.Print("请输入你的用户名: ")
 	inputReader := bufio.NewReader(os.Stdin)
 	clientName, _ := inputReader.ReadString('\n')
 
@@ -218,9 +264,14 @@ func ChatUser(url string) {
 	err = c.WriteMessage(websocket.TextMessage, []byte("【系统消息】 新的用户加入："+clientName))
 	if err != nil {
 		log.Printf("发生错误：%s", err)
+		getOut()
 	}
 
-	go sendMsg(c, clientName)
+	// 将新的用户加入切片
+	// addUser(strings.Join(strings.Fields(clientName), ""))
+
+	// clientName 后面会跟一个 \t，使用 join 和 fields
+	go sendMsg(c, strings.Join(strings.Fields(clientName), ""))
 
 	// 重复监听服务端发送过来的数据
 	for {
@@ -234,16 +285,18 @@ func ChatUser(url string) {
 	}
 }
 
+// 客户端 发送消息模块
 func sendMsg(c *websocket.Conn, clientName string) {
 	for {
 		// fmt.Print("Send> ")
 		inputReader := bufio.NewReader(os.Stdin)
-		sendMsg, _ := inputReader.ReadString('\n')
+		sendMsg, _ := inputReader.ReadString('\r')
 
 		// 简化服务端，在客户端进行数据处理
 		// 拼贴用户名和发送的消息
-		// msg := "【" + clientName + "】" + sendMsg
-		msg := sendMsg
+		msg := "【" + clientName + "】" + sendMsg
+		// msg := sendMsg
+		// fmt.Print(len(clientName))
 		// fmt.Print(msg)
 
 		// 处理完成发送至服务端
@@ -253,6 +306,14 @@ func sendMsg(c *websocket.Conn, clientName string) {
 		}
 	}
 }
+
+// ***********************************************
+//                 客户端模块结束
+// ***********************************************
+
+// ***********************************************
+//                  公共模块开始
+// ***********************************************
 
 // 开启时引导程序
 // 包括：初始化、判断配置文件、启动服务
@@ -271,14 +332,14 @@ func bootstrap() {
 		_, err := os.Create(setPath)
 		if err != nil {
 			log.Printf("初始化失败(%s)\n", err)
-			Enter()
+			getOut()
 		}
 
 		// 打开文件写入
 		f, err := os.OpenFile(setPath, os.O_RDWR, 0600)
 		if err != nil {
 			log.Printf("初始化失败(%s)\n", err)
-			Enter()
+			getOut()
 		}
 
 		// 初始化写入ini
@@ -296,7 +357,7 @@ Port = "8080"
 Url = "ws://localhost:8080/socket"
 # 待补充配置`)
 
-		// 写入完成后关闭文件
+		// 写入完成后之间关闭文件
 		defer f.Close()
 
 		// 省略（感觉log写的太多了）
@@ -304,6 +365,7 @@ Url = "ws://localhost:8080/socket"
 
 		log.Print("初始化结束，请更改配置文件，并重启应用\n")
 
+		// 注意事项
 		fmt.Print(`
 		
 
@@ -319,14 +381,14 @@ Url = "ws://localhost:8080/socket"
 
 
 `)
-		Enter()
-
+		getOut()
 	} else {
 
 		// 跳过初始化
 		log.Printf("找到配置文件，跳过初始化过程\n")
 
 		// 获取 ini 的 mode 数据，0为服务端，1为客户端
+		// 外部内容 Section 空白即可
 		mode := s.Section("").Key("mode").String()
 		switch {
 		case mode == "0":
@@ -373,32 +435,21 @@ Url = "ws://localhost:8080/socket"
 
 			// 检查版本的更新
 			// 启动一个新的 goroutine 检查，防止github连接失败一直卡在连接步骤
-			go CheckNew(version)
-			ChatUser(s.Section("User").Key("Url").String())
+			go checkNew(version)
+			getChat(s.Section("User").Key("Url").String())
 		}
 	}
 }
 
-// 服务端指令控制
-func serveCommand() {
-	fmt.Print("\n")
-	for {
-		inputReader := bufio.NewReader(os.Stdin)
-		fmt.Print(">>> ")
-		command, _ := inputReader.ReadString('\n')
-		fmt.Printf("err command: %s", command)
-	}
-}
-
-// 按任意键退出
-func Enter() {
+// 实现按任意键退出，但好像只有回车管用哈哈哈哈
+func getOut() {
 	fmt.Printf("\n\n\n\n按任意键退出...")
 	b := make([]byte, 1)
 	os.Stdin.Read(b)
 }
 
-// 打印 logo
-func logo(version string) {
+// 打印 logo 和版本的信息
+func printLogo(version string) {
 	fmt.Println(`
     _____     _ _         _____ _       _   
    |     |___| |_|___ ___|     | |_ ___| |_     OnlineChat
@@ -412,7 +463,8 @@ func logo(version string) {
 // 设置全局 version 变量
 var version string = "1.0"
 
-func CheckNew(version string) {
+// 检查最新的版本和是否需要更新
+func checkNew(version string) {
 	log.Print("正在连接 Github 检查更新...")
 
 	// 用 gist 这个来记录更新
@@ -424,7 +476,7 @@ func CheckNew(version string) {
 		log.Println("检查更新失败，无法连接 Github")
 	} else {
 		// 读取 body 里面的内容
-		bytes, err := ioutil.ReadAll(resp.Body)
+		bytes, err := io.ReadAll(resp.Body)
 		if err != nil {
 			log.Println("检查更新失败，无法解析返回数据")
 		}
@@ -440,9 +492,13 @@ func CheckNew(version string) {
 	}
 }
 
+// ***********************************************
+//                  公共模块结束
+// ***********************************************
+
 func main() {
 	// 打印 logo
-	logo(version)
+	printLogo(version)
 	// 初始引导程序
 	bootstrap()
 }

@@ -1,9 +1,6 @@
-<div align="center">
-  
-# 📫OnlineChat ![Travis](https://img.shields.io/badge/Version-1.0-brightgreen.svg)
+# 📫OnlineChat
 ✨ 使用 golang 实现的简单聊天示例 ✨
 
- </div>
 
 
 ## 🎈 使用
@@ -20,17 +17,26 @@
 
 具体设置配置文件内写的很清楚。
 
+## 🚁 服务端命令
+
+> 未完工
+
+- Help/help 帮助
+- UserList/userList 获取用户在线列表
+
 ## 📝 TODO
 
-- [ ] 结合 gin 框架构建全新 Web 版本
-
-- [x] 增加版本更新检测 
-- [ ] 服务端命令式控制
-- [ ] 用户在线列表
+- [ ] 【未来】服务端命令式控制
+- [x] 【未来】增加版本更新检测 （客户端）
+- [ ] 【未来】用户在线列表
+- [ ] 【BUG】........
 
 ## 🚀 从 0.1 到 1.0
 
 - 没有任何影响，可以直接替换 exe
+- 增加了版本检测
+- 优化了代码排版与注释
+- 修复：回复出现乱码
 
 ## 🎡 技术栈
 
