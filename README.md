@@ -44,5 +44,10 @@
 ## 🎡 技术栈
 
 - Golang v1.18
+
 - github.com/gorilla/websocket v1.5.0
+
 - gopkg.in/ini.v1 v1.67.0
+
+<small>已开学，所以目前没时间写。如果你想加入的话就更好了😁</small>
+
