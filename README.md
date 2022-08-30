@@ -1,8 +1,8 @@
 <div align="center">
-  
+
 # 📫OnlineChat
 ✨ 使用 golang 实现的简单聊天示例 ✨
-  
+
 </div>
 
 
@@ -29,10 +29,10 @@
 
 ## 📝 TODO
 
-- [ ] 【未来】服务端命令式控制（doing）
-- [x] 【未来】增加版本更新检测 （done）
-- [ ] 【未来】用户在线列表（doing）
-- [ ] 【未来】使用gin和react构建web端（doing）
+- [ ] 服务端命令式控制（doing）
+- [x] 增加版本更新检测 （done）
+- [ ] 用户在线列表（doing）
+- [ ] 使用gin和react构建web端（doing）
 
 ## 🚀 从 0.1 到 1.0
 

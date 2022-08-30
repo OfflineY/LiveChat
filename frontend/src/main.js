@@ -3,7 +3,6 @@ window.onload = function () {
     var msg = document.getElementById("msg");
     var name = document.getElementById("name");
     var log = document.getElementById("log");
-
     function appendLog(item) {
         var doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
         log.appendChild(item);
@@ -11,7 +10,6 @@ window.onload = function () {
             log.scrollTop = log.scrollHeight - log.clientHeight;
         }
     }
-
     document.getElementById("form").onsubmit = function () {
         if (!conn) {
             return false;
@@ -28,7 +26,6 @@ window.onload = function () {
         name.value = "";
         return false;
     };
-
     if (window["WebSocket"]) {
         conn = new WebSocket("ws://localhost:8080/socket");
         conn.onclose = function (evt) {
@@ -50,4 +47,4 @@ window.onload = function () {
         item.innerHTML = "<b>你的浏览器不支持 WebSockets.</b>";
         appendLog(item);
     }
-};
+}

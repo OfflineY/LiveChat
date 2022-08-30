@@ -14,13 +14,11 @@ func WebServer() {
 	log.Print("已开启【WEB】模式，指令已关闭\n")
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
-	r.LoadHTMLGlob("templates/*")
-	r.Static("/assets", "./assets")
-	r.GET("/:data", func(c *gin.Context) {
-		data := c.Param("data")
-		c.HTML(http.StatusOK, "index.html", gin.H{
-			"title": data,
-		})
+	r.LoadHTMLGlob("assets/*")
+	r.Static("/static", "./static")
+	r.GET("/", func(c *gin.Context) {
+		// data := c.Param("data")
+		c.HTML(http.StatusOK, "index.html", nil)
 	})
 	// v1 := r.Group("/v1")
 	// {

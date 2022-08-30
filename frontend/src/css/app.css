@@ -10,14 +10,23 @@ body {
 
 .chatPaper {
     width: 100%;
-    height: 100%;
+    height: 85vh;
     overflow: hidden;
     margin-top: 20px;
 }
 
-.log{
+.grid{
+    height: 100%;
+}
+
+#log{
     overflow-y: scroll;
-    max-height: 100%;
+    padding: 15px;
+    height: calc(100% - 150px);;
+}
+
+#form{
+    height: 55px;
 }
 
 .chatPaper .appbar,.chatPaper .chat{
