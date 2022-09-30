@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// json 结构体
 type Product struct {
 	Name string `json:"name"`
 	Msg  string `json:"msg"`
@@ -43,10 +42,8 @@ func GetChat(url string) {
 		GetOut()
 	}
 
-	// 将新的用户加入切片
 	// addUser(strings.Join(strings.Fields(clientName), ""))
 
-	// clientName 后面会跟一个 \t，使用 join 和 fields
 	go sendMsg(c, strings.Join(strings.Fields(clientName), ""))
 
 	// 重复监听服务端发送过来的数据
@@ -55,8 +52,6 @@ func GetChat(url string) {
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		// log形式打印出来
 		log.Printf("%s", message)
 	}
 }
@@ -70,8 +65,6 @@ func sendMsg(c *websocket.Conn, clientName string) {
 
 		sendMsg = strings.Join(strings.Fields(sendMsg), "")
 
-		// 简化服务端，在客户端进行数据处理
-		// 拼贴用户名和发送的消息
 		p := &Product{
 			Name: clientName,
 			Msg:  sendMsg,
@@ -86,7 +79,6 @@ func sendMsg(c *websocket.Conn, clientName string) {
 		// fmt.Print(len(clientName))
 		// fmt.Print(msg)
 
-		// 处理完成发送至服务端
 		err := c.WriteMessage(websocket.TextMessage, jsonP)
 		if err != nil {
 			fmt.Println(err)

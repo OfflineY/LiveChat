@@ -5,10 +5,8 @@ import (
 	"OnlineChat/modules"
 )
 
-// 设置全局 version 变量
-var Version string = "1.0"
+var Version string = "2.1"
 
 func main() {
-	// 初始化引导程序
 	modules.Bootstrap(Version)
 }

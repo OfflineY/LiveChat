@@ -15,12 +15,14 @@ func ServeCommand() {
 		fmt.Print(">>> ")
 		command, _ := inputReader.ReadString('\n')
 		switch strings.Join(strings.Fields(command), "") {
-		// UserList 包括大小写两种模式
+
+		// UserList
 		case "UserList":
 			GetUserList()
 		case "userList":
 			GetUserList()
-		// Help 包括大小写两种模式
+
+		// Help
 		case "Help":
 			GetHelp()
 		case "help":
