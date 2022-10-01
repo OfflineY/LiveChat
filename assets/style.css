@@ -90,11 +90,18 @@ a{
 }
 .msg-input{
     float: left;
-    width: 90%;
 }
 .btn-send{
     float: right;
-    width: 10%;
+}
+.modal-footer, .modal-header{
+    background: #f5f5f5;
+}
+.modal-header{
+    border-radius: 3px 3px 0 0 !important;
+}
+.modal-footer{
+    border-radius: 0 0 3px 3px !important;
 }
 .form-control:focus{
     background: #eee;

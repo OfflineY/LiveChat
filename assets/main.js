@@ -1,36 +1,36 @@
+function disabledButton(id, data) {
+    var button = document.getElementById(id);
+    button.disabled = data; //使用true或false，控制是否让按钮禁用
+}
+function checkUserName() {
+    var name = document.getElementById("user");
+    if (name.value == "") {
+        disabledButton("send", true)
+        notice.innerHTML = `
+            <div class="alert alert-warning" role="alert">
+                <svg style="width:24px;height:24px;margin-right:5px;" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M10 4A4 4 0 0 1 14 8A4 4 0 0 1 10 12A4 4 0 0 1 6 8A4 4 0 0 1 10 4M10 14C14.42 14 18 15.79 18 18V20H2V18C2 15.79 5.58 14 10 14M20 12V7H22V13H20M20 17V15H22V17H20Z" />
+                </svg>
+                您还没有登录，没有发言的权限。
+            </div>`;
+    } else {
+        disabledButton("send", false)
+        notice.innerHTML = ``;
+    }
+}
+
 window.onload = function () {
-
-    var request = new XMLHttpRequest();
-      request.open("get", "/api/past_msg");
-      request.send(null);
-      request.onload = function () {
-        if (request.status == 200) {
-          var json = JSON.parse(request.responseText);
-          var ol = document.getElementById('ol');
-          var frag = document.createDocumentFragment();
-          json.person.map(person => {
-            var li = document.createElement("li");
-            li.innerHTML = `名字是 ${person.name} 图片是 ${person.msg}`;
-            frag.append(li);
-          })
-          ol.append(frag)
-        }
-      }
-
-      disabledButton("send", true)
-
+    disabledButton("send", true)
     var conn;
     var msg = document.getElementById("msg");
-    var name = document.getElementById("user");
     var log = document.getElementById("log");
+    var name = document.getElementById("user");
+    var list = document.getElementById("list");
     var notice = document.getElementById("notice");
 
     function appendLog(item) {
-        var doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
         log.appendChild(item);
-        if (doScroll) {
-            log.scrollTop = log.scrollHeight - log.clientHeight;
-        }
+        list.scrollTop = list.scrollHeight;
     }
 
     function getTime() {
@@ -55,8 +55,11 @@ window.onload = function () {
             seconds = '0' + seconds;
         }
         var weekday = mydate.getDay();
+        if (hour > 12) {
+            var hour = hour - 1
+        }
         var arr = new Array('星期天', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六');
-        var time = year + '/' + month + '/' + day + "  " + now + "  " + hour + ':' + minutes + ':'
+        var time = year + '/' + month + '/' + day + " " + now + " " + hour + ':' + minutes + ':'
             + seconds + "  " + arr[weekday];
         return time
     }
@@ -75,27 +78,10 @@ window.onload = function () {
         return false;
     };
 
-    function disabledButton(id, data) {
-        var button = document.getElementById(id);
-        button.disabled = data; //使用true或false，控制是否让按钮禁用
-    }
 
-    function checkUserName() {
-        if (name.value == "") {
-            disabledButton("send", true)
-            notice.innerHTML = `
-            <div class="alert alert-warning" role="alert">
-            <svg style="width:24px;height:24px;margin-right:5px;" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M10 4A4 4 0 0 1 14 8A4 4 0 0 1 10 12A4 4 0 0 1 6 8A4 4 0 0 1 10 4M10 14C14.42 14 18 15.79 18 18V20H2V18C2 15.79 5.58 14 10 14M20 12V7H22V13H20M20 17V15H22V17H20Z" />
-        </svg>您还没有登录，没有发言的权限。
-            </div>`;
-        }else{
-            disabledButton("send", false)
-        }
-    }
 
     if (window["WebSocket"]) {
-        conn = new WebSocket("ws://192.168.1.2:8080/socket");
+        conn = new WebSocket(ws);
         conn.onclose = function () {
             notice.innerHTML = `
                 <div class="alert alert-danger" role="alert">
@@ -107,14 +93,12 @@ window.onload = function () {
         };
         conn.onopen = function () {
             checkUserName()
-            // disabledButton("send", false)
         }
         conn.onmessage = function (evt) {
             var messages = evt.data.split('\n');
             for (var i = 0; i < messages.length; i++) {
                 var item = document.createElement("div");
                 var obj = JSON.parse(messages);
-                // item.innerHTML = `obj.name obj.msg`;
                 item.innerHTML = `
                     <div class="log-item">
                         <p class="user-name"><a href="#"><strong>` + obj.name + `</strong></a></p>

@@ -10,6 +10,7 @@ import (
 func CheckNew(version string) {
 	log.Print("正在连接 Github 检查更新...")
 
+	// url
 	url := "https://raw.githubusercontent.com/OfflineY/OfflineY/main/online-chat-version"
 
 	resp, err := http.Get(url)
@@ -26,9 +27,9 @@ func CheckNew(version string) {
 		data := string(bytes)
 
 		if data != version {
-			log.Printf("检查更新完成，已经是最新版本：%s", data)
-		} else {
 			log.Printf("检查更新完成，有新的可更新版本：%s", data)
+		} else {
+			log.Printf("检查更新完成，已经是最新版本：%s", data)
 		}
 	}
 }

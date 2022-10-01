@@ -24,7 +24,7 @@ const (
 	// pingPeriod = ----
 
 	// 允许来自对等方的最大消息大小
-	maxMessageSize = 10240
+	maxMessageSize = 1024000
 )
 
 var (
@@ -56,14 +56,23 @@ func (c *Client) readPump() {
 	}()
 	// 设置服务端基本配置
 	c.conn.SetReadLimit(maxMessageSize)
-	c.conn.SetReadDeadline(time.Now().Add(pongWait))
-	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	err := c.conn.SetReadDeadline(time.Now().Add(pongWait))
+	if err != nil {
+		log.Print("ws_conn:", err)
+	}
+	c.conn.SetPongHandler(func(string) error {
+		err := c.conn.SetReadDeadline(time.Now().Add(pongWait))
+		if err != nil {
+			log.Print("ws_conn:", err)
+		}
+		return nil
+	})
 	for {
 		// 设置连接循环
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("WS错误: %v", err)
+				log.Printf("Websocket内部错误: %v", err)
 			}
 			break
 		}
@@ -85,10 +94,16 @@ func (c *Client) writePump() {
 	for {
 		select {
 		case message, ok := <-c.send:
-			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			err := c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err != nil {
+				log.Print("ws_conn:", err)
+			}
 			if !ok {
 				// 中枢关闭了通道
-				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				err := c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				if err != nil {
+					log.Print("ws_conn:", err)
+				}
 				return
 			}
 
@@ -96,20 +111,33 @@ func (c *Client) writePump() {
 			if err != nil {
 				return
 			}
-			w.Write(message)
+
+			_, err = w.Write(message)
+			if err != nil {
+				log.Print("ws_write:", err)
+			}
 
 			// 将排队的聊天信息添加到当前websocket信息中
 			n := len(c.send)
 			for i := 0; i < n; i++ {
-				w.Write(newline)
-				w.Write(<-c.send)
+				_, err = w.Write(newline)
+				if err != nil {
+					log.Print("ws_write:", err)
+				}
+				_, err = w.Write(<-c.send)
+				if err != nil {
+					log.Print("ws_write:", err)
+				}
 			}
 
 			if err := w.Close(); err != nil {
 				return
 			}
 		case <-ticker.C:
-			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			err := c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err != nil {
+				log.Print("ws_conn:", err)
+			}
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
@@ -167,8 +195,8 @@ func WorkPrimaryServer(s *ini.File) {
 
 	go hub.run()
 	severUrl := s.Section("Server").Key("Url").String()
-	severPort := s.Section("Server").Key("Port").String()
-	log.Printf("程序已在运行，本地端口: ws://%s%s", severPort, severUrl)
+	sever := s.Section("Server").Key("Server").String()
+	log.Printf("程序已在运行，本地端口: ws://%s%s", sever, severUrl)
 	http.HandleFunc(severUrl, func(w http.ResponseWriter, r *http.Request) {
 
 		// serveWs(hub, w, r)
@@ -185,6 +213,6 @@ func WorkPrimaryServer(s *ini.File) {
 		go client.readPump()
 	})
 
-	ListenAndServe := severPort
+	ListenAndServe := sever
 	log.Fatal(http.ListenAndServe(ListenAndServe, nil))
 }

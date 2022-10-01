@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="zh-cn">
-
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -10,13 +9,15 @@
     <link href="../assets/waves.min.css" rel="stylesheet">
     <link href="../assets/bootstrap.min.css" rel="stylesheet">
     <link href="../assets/style.css" rel="stylesheet">
+    <script>
+        ws = "{{ .ws }}"
+    </script>
     <script src="../assets/main.js"></script>
 </head>
-
 <body>
     <nav class="navbar fixed-top navbar-dark navbar-shadow">
         <div class="container-fluid">
-            <div class="navbar-brand"> 
+            <div class="navbar-brand">
                 <button class="btn btn-icon text-light border-0 p-0" type="button">
                     <svg style="width:24px;height:24px" viewBox="0 0 24 24">
                         <path fill="currentColor" d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" />
@@ -26,7 +27,8 @@
             </div>
             <button class="btn btn-icon text-light border-0 p-0" type="button">
                 <svg style="width:24px;height:24px" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M21.7 18.6V17.6L22.8 16.8C22.9 16.7 23 16.6 22.9 16.5L21.9 14.8C21.9 14.7 21.7 14.7 21.6 14.7L20.4 15.2C20.1 15 19.8 14.8 19.5 14.7L19.3 13.4C19.3 13.3 19.2 13.2 19.1 13.2H17.1C16.9 13.2 16.8 13.3 16.8 13.4L16.6 14.7C16.3 14.9 16.1 15 15.8 15.2L14.6 14.7C14.5 14.7 14.4 14.7 14.3 14.8L13.3 16.5C13.3 16.6 13.3 16.7 13.4 16.8L14.5 17.6V18.6L13.4 19.4C13.3 19.5 13.2 19.6 13.3 19.7L14.3 21.4C14.4 21.5 14.5 21.5 14.6 21.5L15.8 21C16 21.2 16.3 21.4 16.6 21.5L16.8 22.8C16.9 22.9 17 23 17.1 23H19.1C19.2 23 19.3 22.9 19.3 22.8L19.5 21.5C19.8 21.3 20 21.2 20.3 21L21.5 21.4C21.6 21.4 21.7 21.4 21.8 21.3L22.8 19.6C22.9 19.5 22.9 19.4 22.8 19.4L21.7 18.6M18 19.5C17.2 19.5 16.5 18.8 16.5 18S17.2 16.5 18 16.5 19.5 17.2 19.5 18 18.8 19.5 18 19.5M12.3 22H3C1.9 22 1 21.1 1 20V4C1 2.9 1.9 2 3 2H21C22.1 2 23 2.9 23 4V13.1C22.4 12.5 21.7 12 21 11.7V6H3V20H11.3C11.5 20.7 11.8 21.4 12.3 22Z" />
+                    <path fill="currentColor"
+                        d="M21.7 18.6V17.6L22.8 16.8C22.9 16.7 23 16.6 22.9 16.5L21.9 14.8C21.9 14.7 21.7 14.7 21.6 14.7L20.4 15.2C20.1 15 19.8 14.8 19.5 14.7L19.3 13.4C19.3 13.3 19.2 13.2 19.1 13.2H17.1C16.9 13.2 16.8 13.3 16.8 13.4L16.6 14.7C16.3 14.9 16.1 15 15.8 15.2L14.6 14.7C14.5 14.7 14.4 14.7 14.3 14.8L13.3 16.5C13.3 16.6 13.3 16.7 13.4 16.8L14.5 17.6V18.6L13.4 19.4C13.3 19.5 13.2 19.6 13.3 19.7L14.3 21.4C14.4 21.5 14.5 21.5 14.6 21.5L15.8 21C16 21.2 16.3 21.4 16.6 21.5L16.8 22.8C16.9 22.9 17 23 17.1 23H19.1C19.2 23 19.3 22.9 19.3 22.8L19.5 21.5C19.8 21.3 20 21.2 20.3 21L21.5 21.4C21.6 21.4 21.7 21.4 21.8 21.3L22.8 19.6C22.9 19.5 22.9 19.4 22.8 19.4L21.7 18.6M18 19.5C17.2 19.5 16.5 18.8 16.5 18S17.2 16.5 18 16.5 19.5 17.2 19.5 18 18.8 19.5 18 19.5M12.3 22H3C1.9 22 1 21.1 1 20V4C1 2.9 1.9 2 3 2H21C22.1 2 23 2.9 23 4V13.1C22.4 12.5 21.7 12 21 11.7V6H3V20H11.3C11.5 20.7 11.8 21.4 12.3 22Z" />
                 </svg>
             </button>
         </div>
@@ -43,27 +45,64 @@
 
         <div class="card">
             <div class="card-header">
-                <input style="display: inline-block;" value="" placeholder="用户姓名" class="form-control"
-                    type="text" id="user" />
-                <button onclick="checkUserName()" type="button" class="btn btn-fix btn-primary btn-sm">登录加入</button>
-                <!-- <button class="btn btn-dropdown-fix btn-fix btn-light btn-sm" type="button"></button> -->
+                <button type="button" class="btn btn-sm btn-fix btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                    登录注册
+                </button>
+                <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content shadow">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalLabel"><svg style="width:24px;height:24px;margin-right: 10px;" viewBox="0 0 24 24">
+                                    <path fill="currentColor" d="M17 17V21H19V17H21L18 14L15 17H17M11 4C8.8 4 7 5.8 7 8S8.8 12 11 12 15 10.2 15 8 13.2 4 11 4M11 14C6.6 14 3 15.8 3 18V20H12.5C12.2 19.2 12 18.4 12 17.5C12 16.3 12.3 15.2 12.9 14.1C12.3 14.1 11.7 14 11 14" />
+                                </svg>登录加入</h5>
+                                <button type="button" class="btn border-0 p-0" data-bs-dismiss="modal"
+                                    aria-label="Close"><svg style="width:24px;height:24px" viewBox="0 0 24 24">
+                                        <path fill="currentColor" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+                                    </svg></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <label class="form-label fw-bold">用户姓名</label>
+                                <input style="width: 100%;" value="" placeholder="将会作为昵称" class="form-control" type="text"
+                                id="user" />
+                                <div class="form-check pt-4">
+                                    <input class="form-check-input" type="checkbox" value="" id="flexCheckChecked" checked>
+                                    <label class="form-check-label" for="flexCheckChecked">
+                                      使用浏览器 cookie 来记住我
+                                    </label>
+                                  </div>
+                                <!-- <label class="form-label mt-4 fw-bold">用户邮箱</label>
+                                <input style="width: 100%;" value="" placeholder="name@example.com" class="form-control" type="text"/> -->
+                            <!-- <button class="btn btn-dropdown-fix btn-fix btn-light btn-sm" type="button"></button> -->
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-sm btn-fix btn-secondary" data-bs-dismiss="modal"><svg style="width:24px;height:24px" viewBox="0 0 24 24">
+                                    <path fill="currentColor" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+                                </svg> 关闭</button>
+                                <button type="button" onclick="checkUserName()" type="button" data-bs-dismiss="modal" class="btn btn-sm btn-fix btn-primary"><svg style="width:24px;height:24px" viewBox="0 0 24 24">
+                                    <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
+                                </svg> 登录加入</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <div id="notice"></div>
+            <div class="card-body" id="list">
                 <div id="log"></div>
-                <div id="ol"></div>
+                <div id="notice"></div>
             </div>
             <div class="card-footer">
                 <form id="form">
-                    <button class="btn-send btn btn-fix btn-primary btn-sm" id="send" type="submit"><svg style="width:24px;height:24px" viewBox="0 0 24 24">
-                        <path fill="currentColor" d="M2,21L23,12L2,3V10L17,12L2,14V21Z" />
-                    </svg></button>
+                    <button class="btn-send btn btn-fix btn-primary btn-sm" id="send" type="submit"><svg
+                            style="width:24px;height:24px" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M2,21L23,12L2,3V10L17,12L2,14V21Z" />
+                        </svg>
+                    </button>
                     <input placeholder="输入内容回车发送" class="form-control msg-input" type="text" id="msg" autofocus />
                 </form>
             </div>
         </div>
     </div>
-
 </body>
 <script src="../assets/bootstrap.bundle.min.js"></script>
 <script src="../assets/waves.min.js"></script>
@@ -73,5 +112,4 @@
     Waves.attach('.btn-icon');
 </script>
 </body>
-
 </html>
