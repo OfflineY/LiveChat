@@ -8,7 +8,7 @@
 
 ## 🎈 使用
 
-> 方式一：下载exe即可
+> 方式一：下载[https://github.com/OfflineY/OnlineChat/releases](https://github.com/OfflineY/OnlineChat/releases)内的版本解压运行即可。
 
 > 方式二：克隆此仓库运行
 >
@@ -39,9 +39,13 @@
 ## 🚀 从 1.x 到 2.x
 
 - 增加了web端
+- 错误提示与处理方案
+- golang 升级 1.19
 
 ## 🎡 技术栈
 
 - Golang v1.19
 - github.com/gorilla/websocket v1.5.0
 - gopkg.in/ini.v1 v1.67.0
+
+> 已开学，将无时间维护

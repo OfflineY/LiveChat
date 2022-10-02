@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"gopkg.in/ini.v1"
@@ -32,9 +31,9 @@ func WebServer(s *ini.File) {
 	// 	log.Print(err)
 	// }
 
-	webPort := 1234
+	webPort := s.Section("Server").Key("WebPort").String()
 
-	log.Printf("已开启【WEB】模式，指令已关闭，运行在端口：%s\n", strconv.Itoa(webPort))
+	log.Printf("已开启【WEB】模式，指令已关闭，运行在端口：%s\n", webPort)
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 	// t, _ := template.ParseFS(tmpl, "templates/*.html")
@@ -77,7 +76,7 @@ func WebServer(s *ini.File) {
 		})
 	}
 
-	err := r.Run(":" + strconv.Itoa(webPort))
+	err := r.Run(":" + webPort)
 	if err != nil {
 		log.Print("gin:", err)
 	}
