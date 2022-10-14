@@ -44,7 +44,7 @@ func GetChat(url string) {
 
 	// addUser(strings.Join(strings.Fields(clientName), ""))
 
-	go sendMsg(c, strings.Join(strings.Fields(clientName), ""))
+	go SendMsg(c, strings.Join(strings.Fields(clientName), ""))
 
 	// 重复监听服务端发送过来的数据
 	for {
@@ -57,7 +57,7 @@ func GetChat(url string) {
 }
 
 // 客户端 发送消息模块
-func sendMsg(c *websocket.Conn, clientName string) {
+func SendMsg(c *websocket.Conn, clientName string) {
 	for {
 		// fmt.Print("Send> ")
 		inputReader := bufio.NewReader(os.Stdin)

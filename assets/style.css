@@ -135,3 +135,22 @@ a{
     height: 50vh;
     overflow-y: scroll;
 }
+
+.login-box{
+    padding: 25px 55px;
+    width: 500px;
+    margin: 110px 0;
+    display: inline-block;
+    vertical-align: middle;
+    position: relative;
+    z-index: 1;
+}
+.login-box .form-control{
+    width: 100%;
+}
+.login-box button{
+    width: 100%;
+}
+.login{
+    text-align: center;
+}

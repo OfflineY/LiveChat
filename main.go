@@ -5,7 +5,7 @@ import (
 	"OnlineChat/modules"
 )
 
-var Version string = "2.1"
+var Version string = "2.0.0 BETA "
 
 func main() {
 	modules.Bootstrap(Version)

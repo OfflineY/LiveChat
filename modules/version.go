@@ -7,6 +7,9 @@ import (
 )
 
 // 检查最新的版本和是否需要更新
+
+// 等待修改，即将废弃
+
 func CheckNew(version string) {
 	log.Print("正在连接 Github 检查更新...")
 
