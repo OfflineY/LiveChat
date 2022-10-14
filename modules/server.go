@@ -46,7 +46,7 @@ func WebServer(s *ini.File) {
 
 	// t, _ := template.ParseFS(tmpl, "templates/*.html")
 	// r.SetHTMLTemplate(t)
-	r.LoadHTMLGlob("templates/*.html")
+	r.LoadHTMLGlob("templates/*.tmpl")
 
 	// r.StaticFS("/assets", http.FS(static))
 	r.Static("/assets", "./assets")
@@ -57,7 +57,7 @@ func WebServer(s *ini.File) {
 			log.Print("get_cookie:", err)
 		}
 		// data := c.Param("data")
-		c.HTML(http.StatusOK, "index.html", gin.H{
+		c.HTML(http.StatusOK, "index.tmpl", gin.H{
 			"title":   webTitle,
 			"sub":     webSub,
 			"page":    "在线聊天",
@@ -67,7 +67,7 @@ func WebServer(s *ini.File) {
 		})
 	})
 	r.GET("/login", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "login.html", gin.H{
+		c.HTML(http.StatusOK, "login.tmpl", gin.H{
 			"title": webTitle,
 			"sub":   webSub,
 			"page":  "登录",

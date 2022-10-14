@@ -39,13 +39,25 @@
 ## 🚀 从 1.x 到 2.x
 
 - 增加了web端
+
 - 错误提示与处理方案
+
 - golang 升级 1.19
+
+## 🖼截图
+
+![2.0.0beta.1](./screenshot/2.0.0beta1.jpg)
+
+▲ 2.0.0 beta 1 版本
 
 ## 🎡 技术栈
 
 - Golang v1.19
+- github.com/gin-gonic/gin v1.8.1
 - github.com/gorilla/websocket v1.5.0
 - gopkg.in/ini.v1 v1.67.0
+- gorm.io/gorm v1.24.0
+
+
 
 > 已开学，将无时间维护
