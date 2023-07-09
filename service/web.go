@@ -24,8 +24,6 @@ func RunWeb(port string, dbConn *RoomDetail) {
 		c.Next()
 	})
 
-	router.StaticFile("/", "./test/index.html")
-
 	api := router.Group("/api")
 	{
 		api.GET("/", func(context *gin.Context) {
