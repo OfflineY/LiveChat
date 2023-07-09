@@ -1,4 +1,4 @@
-<div align="center">
+<div style="text-align: center">
 
 # LiveChat
 使用 golang 实现的轻量级聊天应用
