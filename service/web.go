@@ -7,7 +7,7 @@ import (
 )
 
 // RunWeb 运行Web应用
-func RunWeb(port string, dbConn *RoomDetail) {
+func RunWeb(port string, c *DatabaseConn, r *Rooms) {
 	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.Default()
@@ -34,13 +34,13 @@ func RunWeb(port string, dbConn *RoomDetail) {
 		})
 
 		api.GET("/settings", func(context *gin.Context) {
-			siteInfo(context, dbConn)
+			siteInfo(context, c)
 		})
 
 		groups := api.Group("/groups")
 		{
 			groups.GET("/", func(context *gin.Context) {
-				groupsInfo(context, dbConn)
+				groupsInfo(context, c)
 			})
 
 			groups.POST("/create", func(context *gin.Context) {
@@ -55,14 +55,14 @@ func RunWeb(port string, dbConn *RoomDetail) {
 						"msg":  err.Error(),
 					})
 				} else {
-					createGroup(context, dbConn, cg.GroupName)
+					createGroup(context, c, r, cg.GroupName)
 				}
 			})
 
 			groups.GET("/search", func(context *gin.Context) {
 				groupId := context.Query("id")
 				groupName := context.Query("name")
-				data, err := findGroup(dbConn, groupId, groupName)
+				data, err := findGroup(c, groupId, groupName)
 				var msg error = nil
 				if err != nil {
 					msg = err
@@ -85,7 +85,7 @@ func RunWeb(port string, dbConn *RoomDetail) {
 
 			groups.GET("/:id/messages", func(context *gin.Context) {
 				id := context.Param("id")
-				historicalMessages(context, dbConn, id)
+				historicalMessages(context, c, id)
 			})
 		}
 	}

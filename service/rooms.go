@@ -12,48 +12,54 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// RoomDetail 房间细节信息包括存储数据库位置
-type RoomDetail struct {
-	RoomHubs     map[string]*ws.Hub
-	Conn         *mongo.Client
-	DatabaseName string
+// DatabaseConn 存储数据库信息
+type DatabaseConn struct {
+	Conn *mongo.Client
+	Name string
+}
+
+// Rooms 储存房间信息
+type Rooms struct {
+	RoomHubs map[string]*ws.Hub
 }
 
 // RecoverRoom 恢复聊天房间
-func RecoverRoom(Room string, dbConn *RoomDetail) {
-	hub := dbConn.RoomHubs[Room]
+func (r *Rooms) RecoverRoom(Room string, c *DatabaseConn) {
+	hub := r.RoomHubs[Room]
 	go hub.RunHub()
 
 	http.HandleFunc("/"+Room, func(w http.ResponseWriter, r *http.Request) {
-		ws.WebSocketServer(hub, w, r, dbConn.Conn, dbConn.DatabaseName, Room)
+		ws.WebSocketServer(hub, w, r, c.Conn, c.Name, Room)
 	})
 
 	log.Println("Recover the Room:", Room)
 }
 
 // CreateRoom 创建新房间
-func CreateRoom(Room string, dbConn *RoomDetail) (bool, string, string) {
-	if _, ok := dbConn.RoomHubs[Room]; ok {
+func (r *Rooms) CreateRoom(Room string, c *DatabaseConn) (bool, string, string) {
+	if _, ok := r.RoomHubs[Room]; ok {
 		log.Println("Room exist and do not need to be created:", Room, util.MD5(Room))
 		return !ok, "", ""
 	} else {
-		dbConn.RoomHubs[Room] = ws.NewHub()
+		r.RoomHubs[Room] = ws.NewHub()
 
 		roomId := util.MD5(Room)
 
-		db.Add(dbConn.Conn, dbConn.DatabaseName, "groups",
+		db.Add(&db.DatabaseConn{
+			Conn: c.Conn,
+			Name: c.Name,
+		}, "groups",
 			bson.D{
 				{"create_time", time.Now()},
 				{"group_name", Room},
-				// TODO：改名不改变
 				{"group_id", roomId},
 			},
 		)
 
-		go dbConn.RoomHubs[Room].RunHub()
+		go r.RoomHubs[Room].RunHub()
 
-		http.HandleFunc("/"+roomId, func(w http.ResponseWriter, r *http.Request) {
-			ws.WebSocketServer(dbConn.RoomHubs[Room], w, r, dbConn.Conn, dbConn.DatabaseName, Room)
+		http.HandleFunc("/"+roomId, func(w http.ResponseWriter, req *http.Request) {
+			ws.WebSocketServer(r.RoomHubs[Room], w, req, c.Conn, c.Name, Room)
 		})
 		log.Println("Create the Room:", Room, roomId)
 		return !ok, Room, roomId

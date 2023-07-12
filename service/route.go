@@ -9,10 +9,16 @@ import (
 )
 
 // siteInfo 网站信息路由
-func siteInfo(context *gin.Context, dbConn *RoomDetail) {
-	siteName, err := db.Find(dbConn.Conn, dbConn.DatabaseName, "settings", bson.M{
-		"name": "site_name",
-	})
+func siteInfo(context *gin.Context, c *DatabaseConn) {
+	siteName, err := db.Find(
+		&db.DatabaseConn{
+			Conn: c.Conn,
+			Name: c.Name,
+		}, "settings",
+		bson.M{
+			"name": "site_name",
+		},
+	)
 	var msg error = nil
 	if err != nil {
 		msg = err
@@ -26,11 +32,12 @@ func siteInfo(context *gin.Context, dbConn *RoomDetail) {
 }
 
 // groupsInfo 房间路由
-func groupsInfo(context *gin.Context, dbConn *RoomDetail) {
+func groupsInfo(context *gin.Context, c *DatabaseConn) {
 	data, err := db.Find(
-		dbConn.Conn,
-		dbConn.DatabaseName,
-		"groups",
+		&db.DatabaseConn{
+			Conn: c.Conn,
+			Name: c.Name,
+		}, "groups",
 		bson.M{},
 	)
 	var msg error = nil
@@ -43,9 +50,13 @@ func groupsInfo(context *gin.Context, dbConn *RoomDetail) {
 	})
 }
 
-func findGroup(dbConn *RoomDetail, groupId string, groupName string) ([]bson.M, error) {
+func findGroup(c *DatabaseConn, groupId string, groupName string) ([]bson.M, error) {
 	if groupId == "" {
-		data, err := db.Find(dbConn.Conn, dbConn.DatabaseName, "groups",
+		data, err := db.Find(
+			&db.DatabaseConn{
+				Conn: c.Conn,
+				Name: c.Name,
+			}, "groups",
 			bson.M{
 				"group_name": bson.M{"$regex": groupName, "$options": "im"},
 			},
@@ -53,14 +64,20 @@ func findGroup(dbConn *RoomDetail, groupId string, groupName string) ([]bson.M, 
 		return data, err
 	}
 	if groupName == "" {
-		data, err := db.Find(dbConn.Conn, dbConn.DatabaseName, "groups",
+		data, err := db.Find(&db.DatabaseConn{
+			Conn: c.Conn,
+			Name: c.Name,
+		}, "groups",
 			bson.M{
 				"group_id": groupId,
 			},
 		)
 		return data, err
 	}
-	data, err := db.Find(dbConn.Conn, dbConn.DatabaseName, "groups",
+	data, err := db.Find(&db.DatabaseConn{
+		Conn: c.Conn,
+		Name: c.Name,
+	}, "groups",
 		bson.M{
 			"group_id":   groupId,
 			"group_name": groupName,
@@ -69,8 +86,8 @@ func findGroup(dbConn *RoomDetail, groupId string, groupName string) ([]bson.M, 
 	return data, err
 }
 
-func createGroup(context *gin.Context, dbConn *RoomDetail, groupName string) {
-	isOk, name, id := CreateRoom(groupName, dbConn)
+func createGroup(context *gin.Context, c *DatabaseConn, r *Rooms, groupName string) {
+	isOk, name, id := r.CreateRoom(groupName, c)
 	if isOk {
 		context.JSON(http.StatusOK, gin.H{
 			"data": gin.H{
@@ -88,9 +105,12 @@ func createGroup(context *gin.Context, dbConn *RoomDetail, groupName string) {
 }
 
 // historicalMessages 历史消息获取
-func historicalMessages(context *gin.Context, dbConn *RoomDetail, groupId string) {
-	data, err := db.Find(dbConn.Conn, dbConn.DatabaseName, "messages", bson.M{
-		"group_id": groupId,
+func historicalMessages(context *gin.Context, c *DatabaseConn, id string) {
+	data, err := db.Find(&db.DatabaseConn{
+		Conn: c.Conn,
+		Name: c.Name,
+	}, "messages", bson.M{
+		"group_id": id,
 	})
 	var msg error = nil
 	if err != nil {

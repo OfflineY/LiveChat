@@ -9,6 +9,11 @@ import (
 	"time"
 )
 
+type DatabaseConn struct {
+	Conn *mongo.Client
+	Name string
+}
+
 // Conn 连接数据库
 func Conn(applyUrl string, maxPoolSize uint64) *mongo.Client {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

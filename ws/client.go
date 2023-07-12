@@ -51,7 +51,7 @@ type UserMessage struct {
 }
 
 // ReadPump 接收器
-func (client *Client) ReadPump(info *RoomInfo) {
+func (client *Client) ReadPump(g *Group) {
 	// 结束长连接处理
 	defer func() {
 		client.hub.unregister <- client
@@ -94,16 +94,19 @@ func (client *Client) ReadPump(info *RoomInfo) {
 			log.Println(err)
 		}
 
-		db.Add(info.Conn, info.DatabaseName, "messages", bson.D{
-			{"group_name", info.RoomName},
-			{"group_id", util.MD5(info.RoomName)},
+		db.Add(&db.DatabaseConn{
+			Conn: g.DatabaseConn,
+			Name: g.DatabaseName,
+		}, "messages", bson.D{
+			{"group_name", g.RoomName},
+			{"group_id", util.MD5(g.RoomName)},
 			{"user_name", msg.UserName},
 			{"send_time", time.Now()},
 			{"msg_type", msg.MsgType},
 			{"url", msg.Url},
 			{"msg", msg.Msg},
 		})
-		//fmt.Println(client.hub.broadcast, string(message))
+
 		client.hub.broadcast <- message
 	}
 }

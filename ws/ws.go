@@ -14,9 +14,9 @@ var upGrader = websocket.Upgrader{
 	},
 }
 
-// RoomInfo 群组信息
-type RoomInfo struct {
-	Conn         *mongo.Client
+// Group 群组信息
+type Group struct {
+	DatabaseConn *mongo.Client
 	DatabaseName string
 	RoomName     string
 	RoomId       string
@@ -45,8 +45,8 @@ func WebSocketServer(
 	client.hub.register <- client
 
 	go client.WritePump()
-	go client.ReadPump(&RoomInfo{
-		Conn:         Conn,
+	go client.ReadPump(&Group{
+		DatabaseConn: Conn,
 		DatabaseName: DatabaseName,
 		RoomName:     RoomName,
 		RoomId:       RoomName,

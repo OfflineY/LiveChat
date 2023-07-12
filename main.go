@@ -11,8 +11,6 @@ import (
 	"net/http"
 )
 
-var dbConn *service.RoomDetail
-
 func main() {
 	util.Paint("v3.0 BETA")
 	fmt.Println("__init__")
@@ -44,18 +42,21 @@ func main() {
 	// roomHubs 房间 hub 集合
 	var roomHubs = make(map[string]*ws.Hub)
 
-	dbConn = &service.RoomDetail{
-		RoomHubs:     roomHubs,
-		Conn:         conn,
-		DatabaseName: databaseName,
+	dbConn := &service.DatabaseConn{
+		Conn: conn,
+		Name: databaseName,
+	}
+
+	rooms := &service.Rooms{
+		RoomHubs: roomHubs,
 	}
 
 	for Room := range roomHubs {
-		service.RecoverRoom(Room, dbConn)
+		rooms.RecoverRoom(Room, dbConn)
 	}
 
 	// TODO
-	service.CreateRoom("test_room_001", dbConn)
+	rooms.CreateRoom("test_room_001", dbConn)
 
 	fmt.Println("__main__")
 
@@ -71,7 +72,7 @@ func main() {
 		"http.ListenAndServe",
 	)
 
-	go service.RunWeb(*webAddr, dbConn)
+	go service.RunWeb(*webAddr, dbConn, rooms)
 
 	log.Println("Web port runs ->", *webAddr)
 
