@@ -10,7 +10,7 @@ Lightweight chat application implemented with golang.
 - New ui（tailwindcss+react）
 - New database（mongodb）
 
-## Use
+## Setup
 
 ```shell
 git clone https://github.com/OfflineY/LiveChat.git
@@ -21,7 +21,7 @@ go get ...(Install the golang package)
 go run main.go
 ```
 
-## Service Api
+## Api
 << GET/POST
 
 RETURN:
