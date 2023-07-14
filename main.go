@@ -15,7 +15,6 @@ func main() {
 	util.Paint("v3.0 BETA")
 	fmt.Println("__init__")
 
-	// 基础配置文件
 	if util.IsIniExist("./conf.ini") {
 		log.Println("Conf exists, skip initialization.")
 	} else {
@@ -24,7 +23,6 @@ func main() {
 
 	cfg := util.IniLoad("./conf.ini")
 
-	// 数据库连接
 	databaseName := cfg.Section("MongoDB").Key("databaseName").Value()
 	applyUrl := cfg.Section("MongoDB").Key("applyUrl").Value()
 	maxPoolSize, err := cfg.Section("MongoDB").Key("maxPoolSize").Uint64()
@@ -37,9 +35,6 @@ func main() {
 		maxPoolSize,
 	)
 
-	// TODO：通过数据库存储内容恢复房间
-
-	// roomHubs 房间 hub 集合
 	var roomHubs = make(map[string]*ws.Hub)
 
 	dbConn := &service.DatabaseConn{
@@ -55,7 +50,6 @@ func main() {
 		rooms.RecoverRoom(Room, dbConn)
 	}
 
-	// TODO
 	rooms.CreateRoom("test_room_001", dbConn)
 
 	fmt.Println("__main__")

@@ -2,22 +2,22 @@
 # LiveChat
 Lightweight chat application implemented with golang.
 
----
-⚠️ v3.x is still developing.
+> **Warning**
+> v3.x is still developing.
 
-## New features（developing）
+## New features
+
+
 
 - New ui（tailwindcss+react）
 - New database（mongodb）
 
-## Setup
+## Getting started
 
 ```shell
 git clone https://github.com/OfflineY/LiveChat.git
 cd LiveChat
-
-go get ...(Install the golang package)
-
+go mod download
 go run main.go
 ```
 
@@ -35,7 +35,8 @@ RETURN:
 
 [PARAMS] `?name=[group_name]&id=[groups_id]`
 
-take at **least one** of the two key values.
+> **Info**
+> take at **least one** of the two key values.
 
 return `data:[...]` and `msg:nil/err`
 

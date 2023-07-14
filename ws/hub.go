@@ -44,7 +44,6 @@ func (hub *Hub) RunHub() {
 		case message := <-hub.broadcast:
 			for client := range hub.clients {
 				select {
-				// 向 client 里写入 message
 				case client.send <- message:
 
 				// 如果管道不能立即写入数据，就认为该 client 出故障
