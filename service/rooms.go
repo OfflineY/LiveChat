@@ -23,7 +23,7 @@ type Rooms struct {
 	RoomHubs map[string]*ws.Hub
 }
 
-// RecoverRoom 恢复聊天房间
+// RecoverRoom recover groups from db
 func (r *Rooms) RecoverRoom(Room string, c *DatabaseConn) {
 	hub := r.RoomHubs[Room]
 	go hub.RunHub()
@@ -35,7 +35,7 @@ func (r *Rooms) RecoverRoom(Room string, c *DatabaseConn) {
 	log.Println("Recover the Room:", Room)
 }
 
-// CreateRoom 创建新房间
+// CreateRoom create new groups
 func (r *Rooms) CreateRoom(Room string, c *DatabaseConn) (bool, string, string) {
 	if _, ok := r.RoomHubs[Room]; ok {
 		log.Println("Room exist and do not need to be created:", Room, util.MD5(Room))
@@ -50,9 +50,9 @@ func (r *Rooms) CreateRoom(Room string, c *DatabaseConn) (bool, string, string) 
 			Name: c.Name,
 		}, "groups",
 			bson.D{
-				{"create_time", time.Now()},
-				{"group_name", Room},
-				{"group_id", roomId},
+				{Key: "create_time", Value: time.Now()},
+				{Key: "group_name", Value: Room},
+				{Key: "group_id", Value: roomId},
 			},
 		)
 

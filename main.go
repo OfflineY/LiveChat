@@ -13,12 +13,14 @@ import (
 
 func main() {
 	util.Paint("v3.0 BETA")
+
 	fmt.Println("__init__")
 
 	if util.IsIniExist("./conf.ini") {
 		log.Println("Conf exists, skip initialization.")
 	} else {
 		log.Println("Conf does not exist, start initialize.")
+		util.IniInitial("./conf.ini")
 	}
 
 	cfg := util.IniLoad("./conf.ini")
@@ -30,11 +32,9 @@ func main() {
 		log.Println(err)
 	}
 
-	conn := db.Conn(
-		applyUrl,
-		maxPoolSize,
-	)
+	conn := db.Conn(applyUrl, maxPoolSize)
 
+	// groups hub
 	var roomHubs = make(map[string]*ws.Hub)
 
 	dbConn := &service.DatabaseConn{

@@ -1,9 +1,10 @@
 package service
 
 import (
-	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 // RunWeb 运行Web应用
@@ -36,6 +37,51 @@ func RunWeb(port string, c *DatabaseConn, r *Rooms) {
 		api.GET("/settings", func(context *gin.Context) {
 			siteInfo(context, c)
 		})
+
+		users := api.Group("users")
+		{
+			users.POST("/login", func(context *gin.Context) {
+				type user struct {
+					UserName string `json:"user_name"`
+					Password string `json:"password"`
+				}
+				var u user
+				err := context.BindJSON(&u)
+				if err != nil {
+					context.JSON(http.StatusBadRequest, gin.H{
+						"data": nil,
+						"msg":  err.Error(),
+					})
+				} else {
+					status, err := auth(c, u.UserName, u.Password)
+					context.JSON(http.StatusBadRequest, gin.H{
+						"data": status,
+						"msg":  err,
+					})
+				}
+			})
+
+			users.POST("/create", func(context *gin.Context) {
+				type user struct {
+					UserName string `json:"user_name"`
+					Password string `json:"password"`
+				}
+				var u user
+				err := context.BindJSON(&u)
+				if err != nil {
+					context.JSON(http.StatusBadRequest, gin.H{
+						"data": nil,
+						"msg":  err.Error(),
+					})
+				} else {
+					status, err := auth(c, u.UserName, u.Password)
+					context.JSON(http.StatusBadRequest, gin.H{
+						"data": status,
+						"msg":  err,
+					})
+				}
+			})
+		}
 
 		groups := api.Group("/groups")
 		{

@@ -6,10 +6,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"go.mongodb.org/mongo-driver/bson"
 	"log"
 	"time"
+
+	"github.com/gorilla/websocket"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 const (
@@ -98,13 +99,13 @@ func (client *Client) ReadPump(g *Group) {
 			Conn: g.DatabaseConn,
 			Name: g.DatabaseName,
 		}, "messages", bson.D{
-			{"group_name", g.RoomName},
-			{"group_id", util.MD5(g.RoomName)},
-			{"user_name", msg.UserName},
-			{"send_time", time.Now()},
-			{"msg_type", msg.MsgType},
-			{"url", msg.Url},
-			{"msg", msg.Msg},
+			{Key: "group_name", Value: g.RoomName},
+			{Key: "group_id", Value: util.MD5(g.RoomName)},
+			{Key: "user_name", Value: msg.UserName},
+			{Key: "send_time", Value: time.Now()},
+			{Key: "msg_type", Value: msg.MsgType},
+			{Key: "url", Value: msg.Url},
+			{Key: "msg", Value: msg.Msg},
 		})
 
 		client.hub.broadcast <- message
