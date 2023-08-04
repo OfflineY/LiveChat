@@ -1,6 +1,7 @@
 package service
 
 import (
+	"LiveChat/util"
 	"log"
 	"net/http"
 
@@ -28,10 +29,7 @@ func RunWeb(port string, c *DatabaseConn, r *Rooms) {
 	api := router.Group("/api")
 	{
 		api.GET("/", func(context *gin.Context) {
-			context.JSON(http.StatusOK, gin.H{
-				"data": nil,
-				"msg":  "LiveChat api v3.0",
-			})
+			context.JSON(http.StatusOK, gin.H{"data": nil, "msg": "__BETA_3.0__"})
 		})
 
 		api.GET("/settings", func(context *gin.Context) {
@@ -45,39 +43,40 @@ func RunWeb(port string, c *DatabaseConn, r *Rooms) {
 					UserName string `json:"user_name"`
 					Password string `json:"password"`
 				}
-				var u user
-				err := context.BindJSON(&u)
+				var userData user
+				err := context.BindJSON(&userData)
 				if err != nil {
 					context.JSON(http.StatusBadRequest, gin.H{
 						"data": nil,
 						"msg":  err.Error(),
 					})
 				} else {
-					status, err := auth(c, u.UserName, u.Password)
+					status, err := loginAuth(c, userData.UserName, userData.Password)
 					context.JSON(http.StatusBadRequest, gin.H{
-						"data": status,
-						"msg":  err,
+						"data": gin.H{
+							"login_status": status,
+							"user":         gin.H{"name": userData.UserName, "password_md5": util.MD5(userData.Password)},
+						}, "msg": err,
 					})
 				}
 			})
 
-			users.POST("/create", func(context *gin.Context) {
+			users.POST("/register", func(context *gin.Context) {
 				type user struct {
 					UserName string `json:"user_name"`
 					Password string `json:"password"`
 				}
-				var u user
-				err := context.BindJSON(&u)
+				var userData user
+				err := context.BindJSON(&userData)
 				if err != nil {
-					context.JSON(http.StatusBadRequest, gin.H{
-						"data": nil,
-						"msg":  err.Error(),
-					})
+					context.JSON(http.StatusBadRequest, gin.H{"data": nil, "msg": err.Error()})
 				} else {
-					status, err := auth(c, u.UserName, u.Password)
+					status, err := registerAuth(c, userData.UserName, userData.Password)
 					context.JSON(http.StatusBadRequest, gin.H{
-						"data": status,
-						"msg":  err,
+						"data": gin.H{
+							"register_status": status,
+							"user":            gin.H{"name": userData.UserName, "password_md5": util.MD5(userData.Password)},
+						}, "msg": err,
 					})
 				}
 			})
@@ -96,10 +95,7 @@ func RunWeb(port string, c *DatabaseConn, r *Rooms) {
 				var cg group
 				err := context.BindJSON(&cg)
 				if err != nil {
-					context.JSON(http.StatusBadRequest, gin.H{
-						"data": nil,
-						"msg":  err.Error(),
-					})
+					context.JSON(http.StatusBadRequest, gin.H{"data": nil, "msg": err.Error()})
 				} else {
 					createGroup(context, c, r, cg.GroupName)
 				}
@@ -108,24 +104,23 @@ func RunWeb(port string, c *DatabaseConn, r *Rooms) {
 			groups.GET("/search", func(context *gin.Context) {
 				groupId := context.Query("id")
 				groupName := context.Query("name")
+
 				data, err := findGroup(c, groupId, groupName)
+
 				var msg error = nil
 				if err != nil {
 					msg = err
 				}
-				context.JSON(http.StatusOK, gin.H{
-					"data": data,
-					"msg":  msg,
-				})
+
+				context.JSON(http.StatusOK, gin.H{"data": data, "msg": msg})
 			})
 
 			groups.GET("/:id/info", func(context *gin.Context) {
 				groupId := context.Param("id")
+
 				context.JSON(http.StatusOK, gin.H{
-					"data": gin.H{
-						"group_id": groupId,
-					},
-					"msg": http.StatusOK,
+					"data": gin.H{"group_id": groupId},
+					"msg":  http.StatusOK,
 				})
 			})
 

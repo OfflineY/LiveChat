@@ -40,20 +40,14 @@ func (r *Rooms) CreateRoom(Room string, c *DatabaseConn) (bool, string, string) 
 	if _, ok := r.RoomHubs[Room]; ok {
 		log.Println("Room exist and do not need to be created:", Room, util.MD5(Room))
 		return !ok, "", ""
+
 	} else {
 		r.RoomHubs[Room] = ws.NewHub()
 
 		roomId := util.MD5(Room)
 
-		db.Add(&db.DatabaseConn{
-			Conn: c.Conn,
-			Name: c.Name,
-		}, "groups",
-			bson.D{
-				{Key: "create_time", Value: time.Now()},
-				{Key: "group_name", Value: Room},
-				{Key: "group_id", Value: roomId},
-			},
+		db.Add(&db.DatabaseConn{Conn: c.Conn, Name: c.Name}, "groups",
+			bson.D{{Key: "create_time", Value: time.Now()}, {Key: "group_name", Value: Room}, {Key: "group_id", Value: roomId}},
 		)
 
 		go r.RoomHubs[Room].RunHub()
@@ -61,6 +55,7 @@ func (r *Rooms) CreateRoom(Room string, c *DatabaseConn) (bool, string, string) 
 		http.HandleFunc("/"+roomId, func(w http.ResponseWriter, req *http.Request) {
 			ws.WebSocketServer(r.RoomHubs[Room], w, req, c.Conn, c.Name, Room)
 		})
+
 		log.Println("Create the Room:", Room, roomId)
 		return !ok, Room, roomId
 	}

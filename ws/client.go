@@ -61,6 +61,7 @@ func (client *Client) ReadPump(g *Group) {
 			log.Println(err)
 		}
 	}()
+
 	client.conn.SetReadLimit(maxMessageSize)
 	err := client.conn.SetReadDeadline(time.Now().Add(pongWait))
 	if err != nil {
@@ -89,23 +90,15 @@ func (client *Client) ReadPump(g *Group) {
 		)
 
 		var msg UserMessage
-
 		err = json.Unmarshal(message, &msg)
 		if err != nil {
 			log.Println(err)
 		}
 
-		db.Add(&db.DatabaseConn{
-			Conn: g.DatabaseConn,
-			Name: g.DatabaseName,
-		}, "messages", bson.D{
-			{Key: "group_name", Value: g.RoomName},
-			{Key: "group_id", Value: util.MD5(g.RoomName)},
-			{Key: "user_name", Value: msg.UserName},
-			{Key: "send_time", Value: time.Now()},
-			{Key: "msg_type", Value: msg.MsgType},
-			{Key: "url", Value: msg.Url},
-			{Key: "msg", Value: msg.Msg},
+		db.Add(&db.DatabaseConn{Conn: g.DatabaseConn, Name: g.DatabaseName}, "messages", bson.D{
+			{Key: "group_name", Value: g.RoomName}, {Key: "group_id", Value: util.MD5(g.RoomName)},
+			{Key: "user_name", Value: msg.UserName}, {Key: "send_time", Value: time.Now()},
+			{Key: "msg_type", Value: msg.MsgType}, {Key: "url", Value: msg.Url}, {Key: "msg", Value: msg.Msg},
 		})
 
 		client.hub.broadcast <- message

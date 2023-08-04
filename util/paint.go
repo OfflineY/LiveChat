@@ -15,7 +15,7 @@ func Paint(version string) {
 	fmt.Println("\\____/_| \\_/ \\___\\____/|_| |_|\\__,_|\\__|")
 	fmt.Printf("LiveChat %s\n\n", version)
 
-	// TODO: 新版本检查更新
+	// TODO：新版本检查更新
 
 	// url := "https://raw.githubusercontent.com/OfflineY/OfflineY/main/online-chat-version"
 

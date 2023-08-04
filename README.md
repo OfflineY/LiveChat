@@ -3,12 +3,9 @@
 Lightweight chat application implemented with golang.
 
 > **Warning**
-> 
 > v3.x is still developing.
 
 ## New features
-
-
 
 - New ui（tailwindcss+react）
 - New database（mongodb）
@@ -25,40 +22,57 @@ go run main.go
 ## Api
 
 > **Note**
->
-> return example:
-> ```
-> "data": "", <- main data
-> "msg": "",  <- err or nil
-> ```
+>[main.go](main.go)
+> return example:`{"data": "[main data]", "msg": "[err or nil]"}`
 
-### Search Group
+---
+
+### Group 对群组的操作
+
+#### Search Group
 [GET] api/groups/**search**
 
 [PARAMS] `?name=[group_name]&id=[groups_id]`
 
 > **Note**
-> 
 > take at **least one** of the two key values.
-> 
 > return `data:[...]` and `msg:nil/err`
 
 
-### Create Group
+#### Create Group
 [POST] api/groups/**create**
 
-[JSON] `{"name":[new group name]}`
+[JSON] `{"name":"[group_name]"}`
 
 > **Note**
->
-> return `group_id` and `group_name`
+> return `"data":{"group_id": "...", "group_status": "<T/F>", "group_name": "..."}` and `msg:nil/err`
 
-### Group Historical messages
+#### Group Historical messages
 [GET] api/groups/**[group_id]**/messages
 
 > **Note**
->
-> return `data:[...]` and `msg:nil/err`
+> return `"data":[{"_id":"...","group_id":"...","group_name":"...","msg":"...","msg_type":"[text/image]","send_time":"...","url":"...","user_name":"..."}...]` and `msg:nil/err`
 
-### Group Info
+#### Group Info
 [GET] api/groups/**[group_id]**/info
+
+> **Note**
+> return `"data":"[...]"` and `"msg":nil/err`
+
+---
+
+### User 用户操作
+#### User Login
+
+[POST] api/user/login
+
+[JSON] `{"user_name": "[user_name]", "password": "[password]"}`
+
+#### User Register
+
+[POST] api/user/register
+
+[JSON] `{"user_name": "[user_name]", "password": "[password]"}`
+
+
+

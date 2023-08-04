@@ -9,9 +9,7 @@ import (
 
 // upGrader 升级为 websocket
 var upGrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
+	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
 // Group 群组信息
@@ -23,15 +21,7 @@ type Group struct {
 }
 
 // WebSocketServer 初始化 websocket 连接
-func WebSocketServer(
-	hub *Hub,
-	w http.ResponseWriter,
-	r *http.Request,
-	Conn *mongo.Client,
-	DatabaseName string,
-	RoomName string,
-) {
-
+func WebSocketServer(hub *Hub, w http.ResponseWriter, r *http.Request, Conn *mongo.Client, DatabaseName string, RoomName string) {
 	conn, err := upGrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
@@ -42,13 +32,9 @@ func WebSocketServer(
 		conn: conn,
 		send: make(chan []byte, 256),
 	}
+
 	client.hub.register <- client
 
 	go client.WritePump()
-	go client.ReadPump(&Group{
-		DatabaseConn: Conn,
-		DatabaseName: DatabaseName,
-		RoomName:     RoomName,
-		RoomId:       RoomName,
-	})
+	go client.ReadPump(&Group{DatabaseConn: Conn, DatabaseName: DatabaseName, RoomName: RoomName, RoomId: RoomName})
 }

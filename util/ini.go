@@ -44,6 +44,13 @@ address = 127.0.0.1:5215
 port = ":8080"
 address = 127.0.0.1:8080`
 
-	openFile.WriteString(str)
-	openFile.Close()
+	_, err := openFile.WriteString(str)
+	if err != nil {
+		log.Println(err)
+	}
+
+	err = openFile.Close()
+	if err != nil {
+		log.Println(err)
+	}
 }

@@ -37,14 +37,9 @@ func main() {
 	// groups hub
 	var roomHubs = make(map[string]*ws.Hub)
 
-	dbConn := &service.DatabaseConn{
-		Conn: conn,
-		Name: databaseName,
-	}
+	dbConn := &service.DatabaseConn{Conn: conn, Name: databaseName}
 
-	rooms := &service.Rooms{
-		RoomHubs: roomHubs,
-	}
+	rooms := &service.Rooms{RoomHubs: roomHubs}
 
 	for Room := range roomHubs {
 		rooms.RecoverRoom(Room, dbConn)
@@ -54,27 +49,16 @@ func main() {
 
 	fmt.Println("__main__")
 
-	var wsAddr = flag.String(
-		"wsAddr",
-		":8080",
-		"http.ListenAndServe",
-	)
-
-	var webAddr = flag.String(
-		"webAddr",
-		":5212",
-		"http.ListenAndServe",
-	)
+	var wsAddr = flag.String("wsAddr", ":8080", "http.ListenAndServe")
+	var webAddr = flag.String("webAddr", ":5212", "http.ListenAndServe")
 
 	go service.RunWeb(*webAddr, dbConn, rooms)
 
 	log.Println("Web port runs ->", *webAddr)
-
 	log.Println("Websocket port runs ->", *wsAddr)
 
 	err = http.ListenAndServe(*wsAddr, nil)
 	if err != nil {
 		log.Fatal("Error: ListenAndServe: ", err)
 	}
-
 }
