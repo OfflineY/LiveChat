@@ -5,7 +5,6 @@ import (
 	"LiveChat/util"
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"log"
 	"time"
 
@@ -16,13 +15,10 @@ import (
 const (
 	// writeWait 最大等待写入时限
 	writeWait = 10 * time.Second
-
 	// pongWait 心跳包最大等待时限
 	pongWait = 60 * time.Second
-
 	// pingPeriod 发送心跳包间隔时间
 	pingPeriod = (pongWait * 9) / 10
-
 	// maxMessageSize 最大消息长度
 	maxMessageSize = 512
 )
@@ -35,10 +31,8 @@ var (
 type Client struct {
 	// hub 创建管道
 	hub *Hub
-
 	// conn 创建websocket连接
 	conn *websocket.Conn
-
 	// send 消息管道
 	send chan []byte
 }
@@ -61,7 +55,6 @@ func (client *Client) ReadPump(g *Group) {
 			log.Println(err)
 		}
 	}()
-
 	client.conn.SetReadLimit(maxMessageSize)
 	err := client.conn.SetReadDeadline(time.Now().Add(pongWait))
 	if err != nil {
@@ -84,23 +77,19 @@ func (client *Client) ReadPump(g *Group) {
 			}
 			break
 		}
-
 		message = bytes.TrimSpace(
 			bytes.Replace(message, newline, space, -1),
 		)
-
 		var msg UserMessage
 		err = json.Unmarshal(message, &msg)
 		if err != nil {
 			log.Println(err)
 		}
-
 		db.Add(&db.DatabaseConn{Conn: g.DatabaseConn, Name: g.DatabaseName}, "messages", bson.D{
 			{Key: "group_name", Value: g.RoomName}, {Key: "group_id", Value: util.MD5(g.RoomName)},
 			{Key: "user_name", Value: msg.UserName}, {Key: "send_time", Value: time.Now()},
 			{Key: "msg_type", Value: msg.MsgType}, {Key: "url", Value: msg.Url}, {Key: "msg", Value: msg.Msg},
 		})
-
 		client.hub.broadcast <- message
 	}
 }
@@ -108,7 +97,6 @@ func (client *Client) ReadPump(g *Group) {
 // WritePump 写入器
 func (client *Client) WritePump() {
 	ticker := time.NewTicker(pingPeriod)
-
 	// 结束长连接处理
 	defer func() {
 		ticker.Stop()
@@ -117,16 +105,13 @@ func (client *Client) WritePump() {
 			return
 		}
 	}()
-
 	for {
 		select {
-
 		case message, ok := <-client.send:
 			err := client.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err != nil {
 				log.Println(err)
 			}
-
 			if !ok {
 				err := client.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				if err != nil {
@@ -134,17 +119,14 @@ func (client *Client) WritePump() {
 				}
 				return
 			}
-
 			w, err := client.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 			}
-
 			_, err = w.Write(message)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 			}
-
 			n := len(client.send)
 			for i := 0; i < n; i++ {
 				_, err := w.Write(newline)
@@ -156,17 +138,14 @@ func (client *Client) WritePump() {
 					log.Println(err)
 				}
 			}
-
 			if err := w.Close(); err != nil {
 				return
 			}
-
 		case <-ticker.C:
 			err := client.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err != nil {
 				log.Println(err)
 			}
-
 			if err := client.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				log.Println(err)
 			}

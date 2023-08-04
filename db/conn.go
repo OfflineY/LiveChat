@@ -18,7 +18,6 @@ type DatabaseConn struct {
 func Conn(applyUrl string, maxPoolSize uint64) *mongo.Client {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
 	Client, err := mongo.Connect(ctx,
 		options.Client().
 			ApplyURI(applyUrl).
@@ -27,7 +26,6 @@ func Conn(applyUrl string, maxPoolSize uint64) *mongo.Client {
 	if err != nil {
 		log.Println(err)
 	}
-
 	err = Client.Ping(ctx, readpref.Primary())
 	if err != nil {
 		log.Println(err)

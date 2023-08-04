@@ -13,12 +13,10 @@ func siteInfo(context *gin.Context, c *DatabaseConn) {
 	siteName, err := db.Find(&db.DatabaseConn{Conn: c.Conn, Name: c.Name}, "settings",
 		bson.M{"name": "site_name"},
 	)
-
 	var msg error = nil
 	if err != nil {
 		msg = err
 	}
-
 	context.JSON(http.StatusOK, gin.H{
 		"data": gin.H{"site_name": siteName[0]["value"]}, "msg": msg,
 	})
@@ -26,15 +24,11 @@ func siteInfo(context *gin.Context, c *DatabaseConn) {
 
 // groupsInfo 房间路由
 func groupsInfo(context *gin.Context, c *DatabaseConn) {
-	data, err := db.Find(&db.DatabaseConn{Conn: c.Conn, Name: c.Name}, "groups",
-		bson.M{},
-	)
-
+	data, err := db.Find(&db.DatabaseConn{Conn: c.Conn, Name: c.Name}, "groups", bson.M{})
 	var msg error = nil
 	if err != nil {
 		msg = err
 	}
-
 	context.JSON(http.StatusOK, gin.H{"data": data, "msg": msg})
 }
 
@@ -76,11 +70,9 @@ func historicalMessages(context *gin.Context, c *DatabaseConn, id string) {
 	data, err := db.Find(&db.DatabaseConn{Conn: c.Conn, Name: c.Name}, "messages", bson.M{
 		"group_id": id,
 	})
-
 	var msg error = nil
 	if err != nil {
 		msg = err
 	}
-
 	context.JSON(http.StatusOK, gin.H{"data": data, "msg": msg})
 }

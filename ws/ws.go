@@ -26,15 +26,8 @@ func WebSocketServer(hub *Hub, w http.ResponseWriter, r *http.Request, Conn *mon
 	if err != nil {
 		log.Println(err)
 	}
-
-	client := &Client{
-		hub:  hub,
-		conn: conn,
-		send: make(chan []byte, 256),
-	}
-
+	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
 	client.hub.register <- client
-
 	go client.WritePump()
 	go client.ReadPump(&Group{DatabaseConn: Conn, DatabaseName: DatabaseName, RoomName: RoomName, RoomId: RoomName})
 }

@@ -11,12 +11,10 @@ func loginAuth(conn *DatabaseConn, userName string, password string) (bool, erro
 	data, err := db.Find(&db.DatabaseConn{Conn: conn.Conn, Name: conn.Name}, "users", bson.M{
 		"user_name": userName,
 	})
-
 	var msg error = nil
 	if err != nil {
 		msg = err
 	}
-
 	return data[0]["password"] == util.MD5(password), msg
 }
 
@@ -25,12 +23,10 @@ func registerAuth(conn *DatabaseConn, userName string, password string) (bool, e
 	data, err := db.Find(&db.DatabaseConn{Conn: conn.Conn, Name: conn.Name}, "users", bson.M{
 		"user_name": userName,
 	})
-
 	var msg error = nil
 	if err != nil {
 		msg = err
 	}
-
 	if len(data) != 0 {
 		return false, msg
 	} else {

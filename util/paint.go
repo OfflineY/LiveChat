@@ -14,11 +14,8 @@ func Paint(version string) {
 	fmt.Println("/ /__| |\\ V /  __/ /___| | | | (_| | |_ ")
 	fmt.Println("\\____/_| \\_/ \\___\\____/|_| |_|\\__,_|\\__|")
 	fmt.Printf("LiveChat %s\n\n", version)
-
 	// TODO：新版本检查更新
-
 	// url := "https://raw.githubusercontent.com/OfflineY/OfflineY/main/online-chat-version"
-
 	// resp, err := http.Get(url)
 	// if err != nil {
 	// 	fmt.Println("Cannot find new version")
@@ -27,19 +24,15 @@ func Paint(version string) {
 	// 	if err != nil {
 	// 		fmt.Println("Cannot find new version")
 	// 	}
-
 	// 	defer resp.Body.Close()
 	// 	data := string(bytes)
-
 	// 	v1, err := v.NewVersion("1.2")
 	// 	v2, err := v.NewVersion("1.5+metadata")
-
 	// 	// Comparison example. There is also GreaterThan, Equal, and just
 	// 	// a simple Compare that returns an int allowing easy >=, <=, etc.
 	// 	if v1.LessThan(v2) {
 	// 		fmt.Printf("%s is less than %s", v1, v2)
 	// 	}
-
 	// 	if data != version {
 	// 		fmt.Printf("Has new version: %s", data)
 	// 	} else {

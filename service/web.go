@@ -11,31 +11,16 @@ import (
 // RunWeb 运行Web应用
 func RunWeb(port string, c *DatabaseConn, r *Rooms) {
 	gin.SetMode(gin.ReleaseMode)
-
 	router := gin.Default()
-
-	// 中间件 允许跨域
-	router.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(http.StatusNoContent)
-			return
-		}
-		c.Next()
-	})
-
+	router.Use(util.AllowCORS())
 	api := router.Group("/api")
 	{
 		api.GET("/", func(context *gin.Context) {
 			context.JSON(http.StatusOK, gin.H{"data": nil, "msg": "__BETA_3.0__"})
 		})
-
 		api.GET("/settings", func(context *gin.Context) {
 			siteInfo(context, c)
 		})
-
 		users := api.Group("users")
 		{
 			users.POST("/login", func(context *gin.Context) {
@@ -60,7 +45,6 @@ func RunWeb(port string, c *DatabaseConn, r *Rooms) {
 					})
 				}
 			})
-
 			users.POST("/register", func(context *gin.Context) {
 				type user struct {
 					UserName string `json:"user_name"`
@@ -81,13 +65,11 @@ func RunWeb(port string, c *DatabaseConn, r *Rooms) {
 				}
 			})
 		}
-
 		groups := api.Group("/groups")
 		{
 			groups.GET("/", func(context *gin.Context) {
 				groupsInfo(context, c)
 			})
-
 			groups.POST("/create", func(context *gin.Context) {
 				type group struct {
 					GroupName string `json:"name"`
@@ -100,7 +82,6 @@ func RunWeb(port string, c *DatabaseConn, r *Rooms) {
 					createGroup(context, c, r, cg.GroupName)
 				}
 			})
-
 			groups.GET("/search", func(context *gin.Context) {
 				groupId := context.Query("id")
 				groupName := context.Query("name")
@@ -114,7 +95,6 @@ func RunWeb(port string, c *DatabaseConn, r *Rooms) {
 
 				context.JSON(http.StatusOK, gin.H{"data": data, "msg": msg})
 			})
-
 			groups.GET("/:id/info", func(context *gin.Context) {
 				groupId := context.Param("id")
 
@@ -123,7 +103,6 @@ func RunWeb(port string, c *DatabaseConn, r *Rooms) {
 					"msg":  http.StatusOK,
 				})
 			})
-
 			groups.GET("/:id/messages", func(context *gin.Context) {
 				id := context.Param("id")
 				historicalMessages(context, c, id)

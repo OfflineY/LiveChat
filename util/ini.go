@@ -20,7 +20,6 @@ func IniLoad(path string) *ini.File {
 	if err != nil {
 		log.Panicln(err)
 	}
-
 	return cfg
 }
 
@@ -43,12 +42,10 @@ address = 127.0.0.1:5215
 [websocket]
 port = ":8080"
 address = 127.0.0.1:8080`
-
 	_, err := openFile.WriteString(str)
 	if err != nil {
 		log.Println(err)
 	}
-
 	err = openFile.Close()
 	if err != nil {
 		log.Println(err)

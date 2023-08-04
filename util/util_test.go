@@ -16,7 +16,6 @@ func TestIsIniExist(t *testing.T) {
 	} else {
 		log.Println("Conf does not exist, start initialize.")
 	}
-
 	cfg := util.IniLoad("../conf.ini")
 	fmt.Println(cfg.Section("web").Key("address").Value())
 }
