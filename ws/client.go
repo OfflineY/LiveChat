@@ -39,15 +39,18 @@ type Client struct {
 
 // UserMessage 用户消息结构体
 type UserMessage struct {
+	// UserName 消息发送用户名
 	UserName string `json:"user_name"`
-	MsgType  string `json:"msg_type"`
-	Url      string `json:"url"`
-	Msg      string `json:"msg"`
+	// MsgType 消息发送类型
+	MsgType string `json:"msg_type"`
+	// Url 图片消息上传地址
+	Url string `json:"url"`
+	// Msg 文字消息内容
+	Msg string `json:"msg"`
 }
 
 // ReadPump 接收器
 func (client *Client) ReadPump(g *Group) {
-	// 结束长连接处理
 	defer func() {
 		client.hub.unregister <- client
 		err := client.conn.Close()
@@ -73,7 +76,6 @@ func (client *Client) ReadPump(g *Group) {
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				return
-				//log.Println("ConnClose: UnexpectedClose:", err)
 			}
 			break
 		}
@@ -86,9 +88,8 @@ func (client *Client) ReadPump(g *Group) {
 			log.Println(err)
 		}
 		db.Add(&db.DatabaseConn{Conn: g.DatabaseConn, Name: g.DatabaseName}, "messages", bson.D{
-			{Key: "group_name", Value: g.RoomName}, {Key: "group_id", Value: util.MD5(g.RoomName)},
-			{Key: "user_name", Value: msg.UserName}, {Key: "send_time", Value: time.Now()},
-			{Key: "msg_type", Value: msg.MsgType}, {Key: "url", Value: msg.Url}, {Key: "msg", Value: msg.Msg},
+			{Key: "group_name", Value: g.RoomName}, {Key: "group_id", Value: util.MD5(g.RoomName)}, {Key: "user_name", Value: msg.UserName},
+			{Key: "send_time", Value: time.Now()}, {Key: "msg_type", Value: msg.MsgType}, {Key: "url", Value: msg.Url}, {Key: "msg", Value: msg.Msg},
 		})
 		client.hub.broadcast <- message
 	}
@@ -97,7 +98,6 @@ func (client *Client) ReadPump(g *Group) {
 // WritePump 写入器
 func (client *Client) WritePump() {
 	ticker := time.NewTicker(pingPeriod)
-	// 结束长连接处理
 	defer func() {
 		ticker.Stop()
 		err := client.conn.Close()

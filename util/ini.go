@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/go-ini/ini"
+	"gopkg.in/ini.v1"
 )
 
 // IsIniExist ini配置文件是否存在
@@ -25,29 +25,17 @@ func IniLoad(path string) *ini.File {
 
 // IniInitial 初始化ini文件
 func IniInitial(path string) {
-	openFile, e := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
+	_, e := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
 	if e != nil {
 		fmt.Println(e)
 	}
-	str := `
-[MongoDB]
-applyUrl = "mongodb://127.0.0.1:27017"
-maxPoolSize = 20
-databaseName = "LiveChat"
-    
-[web]
-port = ":5215"
-address = 127.0.0.1:5215
-    
-[websocket]
-port = ":8080"
-address = 127.0.0.1:8080`
-	_, err := openFile.WriteString(str)
-	if err != nil {
-		log.Println(err)
-	}
-	err = openFile.Close()
-	if err != nil {
-		log.Println(err)
-	}
+	//cfg := IniLoad(path)
+	//_, err := cfg.NewSection("new section")
+	//if err != nil {
+	//	log.Println(err)
+	//}
+	//_, err = cfg.Section("").NewKey("name", "value")
+	//if err != nil {
+	//	log.Println(err)
+	//}
 }
