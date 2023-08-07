@@ -68,11 +68,17 @@ go run main.go
 
 [JSON] `{"user_name": "[user_name]", "password": "[password]"}`
 
+> **Note**
+> return `"data":"[...]"` and `"msg":nil/err`
+
 #### User Register
 
 [POST] api/user/register
 
 [JSON] `{"user_name": "[user_name]", "password": "[password]"}`
+
+> **Note**
+> return `"data":"[...]"` and `"msg":nil/err`
 
 
 
