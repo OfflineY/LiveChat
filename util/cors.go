@@ -1,8 +1,9 @@
 package util
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 // AllowCORS gin中间件允许跨域
